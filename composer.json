@@ -1,0 +1,18 @@
+{
+    "name": "phprtc/server",
+    "description": "PHPRTC Server",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "ahmard",
+            "email": "ahmardy@outlook.com"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "RTC\\Server\\": "src/"
+        }
+    }
+}
