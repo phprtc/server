@@ -25,10 +25,5 @@
             "type": "composer",
             "url": "https://phprtc.repo.repman.io"
         }
-    ],
-    "extra": {
-        "branch-alias": {
-            "dev-master": "1.0.x-dev"
-        }
-    }
+    ]
 }
