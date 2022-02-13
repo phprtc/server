@@ -3,23 +3,33 @@
 namespace RTC\Server\Facades;
 
 use App\Http\Kernel;
-use QuickRoute\Router\Dispatcher;
 use RTC\Contracts\Http\HttpHandlerInterface;
+use RTC\Http\Exceptions\MiddlewareException;
 use RTC\Http\Request;
-use Swoole\Http\Request as Request1;
-use Swoole\Http\Response as Response1;
-use Swoole\Http2\Request as Request2;
-use Swoole\Http2\Response as Response2;
+use RTC\Http\Router\Dispatcher;
+use Swoole\Http\Request as Http1Request;
+use Swoole\Http\Response as Http1Response;
+use Swoole\Http2\Request as Http2Request;
+use Swoole\Http2\Response as Http2Response;
 
 class HttpHandler
 {
-    public function __construct(protected HttpHandlerInterface $handler)
+    public function __construct(
+        protected HttpHandlerInterface $handler,
+        protected \RTC\Http\Kernel $kernel
+    )
     {
     }
 
-    public function __invoke(Request1|Request2 $swRequest, Response1|Response2 $swResponse)
+    /**
+     * @param Http1Request|Http2Request $swRequest
+     * @param Http1Response|Http2Response $swResponse
+     * @return void
+     * @throws MiddlewareException
+     */
+    public function __invoke(Http1Request|Http2Request $swRequest, Http1Response|Http2Response $swResponse)
     {
-        $httpMiddlewares = Kernel::getHttpMiddlewares();
+        $httpMiddlewares = $this->kernel->getDefaultHttpMiddlewares();
 
         // Dispatch http request routes if any is provided
         if ($this->handler->hasRouteCollector()) {
