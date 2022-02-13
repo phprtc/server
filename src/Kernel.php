@@ -10,7 +10,7 @@ class Kernel
 
     protected array $httpMiddlewares = [];
 
-    private array $httpDefaultMiddlewares = [];
+    protected array $httpDefaultMiddlewares = [];
 
     /**
      * Specifies whether to use default http middlewares
