@@ -1,0 +1,7 @@
+parameters:
+    level: 8
+    paths: ['src', 'tests']
+    checkMissingIterableValueType: false
+    ignoreErrors:
+        - '#Unsafe usage of new static\(\)#'
+        - "#Attribute class JetBrains*#"

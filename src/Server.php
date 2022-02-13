@@ -6,7 +6,7 @@ use Closure;
 use JetBrains\PhpStorm\Pure;
 use RTC\Contracts\Http\HttpHandlerInterface;
 use RTC\Contracts\Websocket\WebsocketHandlerInterface;
-use RTC\Http\Kernel;
+use RTC\Server\Exceptions\UnexpectedValueException;
 use RTC\Server\Facades\HttpHandler;
 use RTC\Websocket\Connection;
 use Swoole\Http\Request as Http1Request;
@@ -29,7 +29,7 @@ class Server
 
     public static function create(string $host, int $port): static
     {
-        return new Server($host, $port);
+        return new static($host, $port);
     }
 
     public function __construct(protected string $host, protected int $port)
@@ -50,7 +50,17 @@ class Server
     public function setHttpHandler(HttpHandlerInterface $handler, string|Kernel $kernel): static
     {
         $this->httpHandler = $handler;
-        $this->httpKernel = is_object($kernel) ?: new $kernel;
+
+        if (is_string($kernel)) {
+            $kernel = new $kernel;
+        }
+
+        if (!$kernel instanceof Kernel) {
+            throw new UnexpectedValueException("Kernel must be child of {$kernel::class}");
+        }
+
+        $this->httpKernel = $kernel;
+
         return $this;
     }
 

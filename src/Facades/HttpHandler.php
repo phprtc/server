@@ -2,11 +2,11 @@
 
 namespace RTC\Server\Facades;
 
-use App\Http\Kernel;
 use RTC\Contracts\Http\HttpHandlerInterface;
 use RTC\Http\Exceptions\MiddlewareException;
 use RTC\Http\Request;
 use RTC\Http\Router\Dispatcher;
+use RTC\Server\Kernel;
 use Swoole\Http\Request as Http1Request;
 use Swoole\Http\Response as Http1Response;
 use Swoole\Http2\Request as Http2Request;
@@ -16,7 +16,7 @@ class HttpHandler
 {
     public function __construct(
         protected HttpHandlerInterface $handler,
-        protected \RTC\Http\Kernel $kernel
+        protected Kernel $kernel
     )
     {
     }

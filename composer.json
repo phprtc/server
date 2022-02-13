@@ -11,13 +11,13 @@
     ],
     "require": {
         "php": ">=8.1",
-        "swoole/ide-helper": "^4.8",
         "phprtc/utils": "dev-master",
         "phprtc/contracts": "dev-master"
     },
     "autoload": {
         "psr-4": {
-            "RTC\\Server\\": "src/"
+            "RTC\\Server\\": "src/",
+            "RTC\\Server\\Tests\\": "tests/"
         }
     },
     "repositories": [
@@ -25,5 +25,14 @@
             "type": "composer",
             "url": "https://phprtc.repo.repman.io"
         }
-    ]
+    ],
+    "require-dev": {
+        "swoole/ide-helper": "^4.8",
+        "phpstan/phpstan": "^1.4",
+        "phpunit/phpunit": "^9.5"
+    },
+    "scripts": {
+        "analyse": "phpstan analyse",
+        "test": "phpunit"
+    }
 }
