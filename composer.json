@@ -10,11 +10,20 @@
         }
     ],
     "require": {
-        "php": ">=8.1"
+        "php": ">=8.1",
+        "phprtc/contracts": "dev-master",
+        "phprtc/utils": "dev-master",
+        "swoole/ide-helper": "^4.8"
     },
     "autoload": {
         "psr-4": {
             "RTC\\Server\\": "src/"
         }
-    }
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://phprtc.repo.repman.io"
+        }
+    ]
 }
