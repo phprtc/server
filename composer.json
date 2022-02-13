@@ -12,8 +12,8 @@
     "require": {
         "php": ">=8.1",
         "swoole/ide-helper": "^4.8",
-        "phprtc/utils": "dev-master as 1.0.x-dev",
-        "phprtc/contracts": "dev-master as 1.0.x-dev"
+        "phprtc/utils": "dev-master",
+        "phprtc/contracts": "dev-master"
     },
     "autoload": {
         "psr-4": {
