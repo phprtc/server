@@ -56,7 +56,7 @@ class Server
         }
 
         if (!$kernel instanceof Kernel) {
-            throw new UnexpectedValueException("Kernel must be child of {$kernel::class}");
+            throw new UnexpectedValueException('Kernel must be child of' . Kernel::class);
         }
 
         $this->httpKernel = $kernel;
