@@ -29,7 +29,7 @@ class HttpHandler
      */
     public function __invoke(Http1Request|Http2Request $swRequest, Http1Response|Http2Response $swResponse)
     {
-        $httpMiddlewares = $this->kernel->getDefaultHttpMiddlewares();
+        $httpMiddlewares = $this->kernel->getDefaultMiddlewares();
 
         // Dispatch http request routes if any is provided
         if ($this->handler->hasRouteCollector()) {
