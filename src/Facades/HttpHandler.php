@@ -3,10 +3,10 @@
 namespace RTC\Server\Facades;
 
 use RTC\Contracts\Http\HttpHandlerInterface;
+use RTC\Contracts\Http\KernelInterface;
 use RTC\Http\Exceptions\MiddlewareException;
 use RTC\Http\Request;
 use RTC\Http\Router\Dispatcher;
-use RTC\Server\Kernel;
 use Swoole\Http\Request as Http1Request;
 use Swoole\Http\Response as Http1Response;
 use Swoole\Http2\Request as Http2Request;
@@ -16,7 +16,7 @@ class HttpHandler
 {
     public function __construct(
         protected HttpHandlerInterface $handler,
-        protected Kernel $kernel
+        protected KernelInterface      $kernel
     )
     {
     }
@@ -40,7 +40,13 @@ class HttpHandler
             unset($httpMiddlewares[0]);
         }
 
-        $request = new Request($swRequest, $swResponse, $dispatchResult ?? null);
+        $request = new Request(
+            $swRequest,
+            $swResponse,
+            $this->kernel,
+            $dispatchResult ?? null
+        );
+
         $request->initMiddleware(...$httpMiddlewares);
     }
 }
