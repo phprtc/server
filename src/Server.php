@@ -5,6 +5,7 @@ namespace RTC\Server;
 use Closure;
 use JetBrains\PhpStorm\Pure;
 use RTC\Contracts\Http\HttpHandlerInterface;
+use RTC\Contracts\Http\KernelInterface;
 use RTC\Contracts\Websocket\WebsocketHandlerInterface;
 use RTC\Server\Exceptions\UnexpectedValueException;
 use RTC\Server\Facades\HttpHandler;
@@ -18,7 +19,7 @@ class Server
 {
     protected \Swoole\Websocket\Server|\Swoole\Http\Server $server;
     protected HttpHandlerInterface $httpHandler;
-    protected Kernel $httpKernel;
+    protected KernelInterface $httpKernel;
     protected Closure $onStartCallback;
 
     protected array $websocketHandlers = [];
@@ -47,7 +48,7 @@ class Server
         return $this;
     }
 
-    public function setHttpHandler(HttpHandlerInterface $handler, string|Kernel $kernel): static
+    public function setHttpHandler(HttpHandlerInterface $handler, string|KernelInterface $kernel): static
     {
         $this->httpHandler = $handler;
 
@@ -55,8 +56,8 @@ class Server
             $kernel = new $kernel;
         }
 
-        if (!$kernel instanceof Kernel) {
-            throw new UnexpectedValueException('Kernel must be child of' . Kernel::class);
+        if (!$kernel instanceof KernelInterface) {
+            throw new UnexpectedValueException('Kernel must implement ' . KernelInterface::class);
         }
 
         $this->httpKernel = $kernel;
