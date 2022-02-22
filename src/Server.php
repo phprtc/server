@@ -6,6 +6,7 @@ use Closure;
 use JetBrains\PhpStorm\Pure;
 use RTC\Contracts\Http\HttpHandlerInterface;
 use RTC\Contracts\Http\KernelInterface;
+use RTC\Contracts\Websocket\ConnectionInterface;
 use RTC\Contracts\Websocket\WebsocketHandlerInterface;
 use RTC\Server\Exceptions\UnexpectedValueException;
 use RTC\Server\Facades\HttpHandler;
@@ -123,7 +124,7 @@ class Server
         return null;
     }
 
-    #[Pure] public function makeConnection(int $fd): Connection
+    #[Pure] public function makeConnection(int $fd): ConnectionInterface
     {
         return new Connection($this, $fd);
     }
@@ -142,8 +143,10 @@ class Server
         }
 
         $this->server->on('start', function () {
-            $cb = $this->onStartCallback;
-            $cb($this->server);
+            if (isset($this->onStartCallback)) {
+                $cb = $this->onStartCallback;
+                $cb($this->server);
+            }
         });
 
         // NEW CONNECTION
