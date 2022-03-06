@@ -4,9 +4,9 @@ namespace RTC\Server;
 
 use Closure;
 use JetBrains\PhpStorm\Pure;
-use RTC\Contracts\Http\HttpHandlerInterface;
-use RTC\Contracts\Http\KernelInterface;
+use RTC\Contracts\Http\KernelInterface as HttpKernelInterface;
 use RTC\Contracts\Websocket\ConnectionInterface;
+use RTC\Contracts\Websocket\KernelInterface as WSKernelInterface;
 use RTC\Contracts\Websocket\WebsocketHandlerInterface;
 use RTC\Server\Exceptions\UnexpectedValueException;
 use RTC\Server\Facades\HttpHandler;
@@ -19,13 +19,10 @@ use Swoole\WebSocket\Frame;
 class Server
 {
     protected \Swoole\Websocket\Server|\Swoole\Http\Server $server;
-    protected HttpHandlerInterface $httpHandler;
-    protected KernelInterface $httpKernel;
+    protected HttpKernelInterface $httpKernel;
+    protected WSKernelInterface $wsKernel;
     protected Closure $onStartCallback;
-
-    protected array $websocketHandlers = [];
     protected Table $connections;
-
     protected array $settings = [];
 
 
@@ -49,16 +46,14 @@ class Server
         return $this;
     }
 
-    public function setHttpHandler(HttpHandlerInterface $handler, string|KernelInterface $kernel): static
+    public function setHttpHandler(string|HttpKernelInterface $kernel): static
     {
-        $this->httpHandler = $handler;
-
         if (is_string($kernel)) {
             $kernel = new $kernel;
         }
 
-        if (!$kernel instanceof KernelInterface) {
-            throw new UnexpectedValueException('Kernel must implement ' . KernelInterface::class);
+        if (!$kernel instanceof HttpKernelInterface) {
+            throw new UnexpectedValueException('Kernel must implement ' . HttpKernelInterface::class);
         }
 
         $this->httpKernel = $kernel;
@@ -66,9 +61,9 @@ class Server
         return $this;
     }
 
-    public function addWebsocketHandler(string $path, string|WebsocketHandlerInterface $handler): static
+    public function setWebsocketKernel(string|WSKernelInterface $kernel): static
     {
-        $this->websocketHandlers[$path] = is_object($handler) ? $handler : new $handler($this);
+        $this->wsKernel = $kernel;
         return $this;
     }
 
@@ -108,7 +103,7 @@ class Server
 
     public function findHandler(string $path): ?WebsocketHandlerInterface
     {
-        foreach ($this->websocketHandlers as $handlerPath => $handler) {
+        foreach ($this->wsKernel->getHandlers() as $handlerPath => $handler) {
             if ($path == $handlerPath) return $handler;
         }
 
@@ -138,8 +133,8 @@ class Server
             $this->server = new \Swoole\Websocket\Server($this->host, $this->port);
         }
 
-        if (isset($this->httpHandler)) {
-            $this->server->on('request', new HttpHandler($this->httpHandler, $this->httpKernel));
+        if ($this->httpKernel->hasHandler()) {
+            $this->server->on('request', new HttpHandler($this->httpKernel->getHandler(), $this->httpKernel));
         }
 
         $this->server->on('start', function () {

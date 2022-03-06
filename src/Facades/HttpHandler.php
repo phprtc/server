@@ -5,6 +5,7 @@ namespace RTC\Server\Facades;
 use RTC\Contracts\Http\HttpHandlerInterface;
 use RTC\Contracts\Http\KernelInterface;
 use RTC\Http\Exceptions\MiddlewareException;
+use RTC\Http\Middlewares\ControllerExecutorMiddleware;
 use RTC\Http\Request;
 use RTC\Http\Router\Dispatcher;
 use Swoole\Http\Request as Http1Request;
@@ -38,6 +39,7 @@ class HttpHandler
         } else {
             // Remove route dispatcher middleware, as no route collector is provided
             unset($httpMiddlewares[0]);
+            unset($httpMiddlewares[1]);
         }
 
         $request = new Request(
@@ -48,5 +50,12 @@ class HttpHandler
         );
 
         $request->initMiddleware(...$httpMiddlewares);
+
+        if (!$request->hasRouteCollector()){
+            $this->handler->handle($request);
+            return;
+        }
+
+        $request->getMiddleware()->next();
     }
 }
