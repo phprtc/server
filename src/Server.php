@@ -23,6 +23,12 @@ class Server
     protected WSKernelInterface $wsKernel;
     protected Closure $onStartCallback;
     protected Table $connections;
+
+    /**
+     * @var WebsocketHandlerInterface[]
+     */
+    protected array $websocketHandlers = [];
+
     protected array $settings = [];
 
 
@@ -46,7 +52,12 @@ class Server
         return $this;
     }
 
-    public function setHttpHandler(string|HttpKernelInterface $kernel): static
+    /**
+     * @param string|HttpKernelInterface $kernel
+     * @return $this
+     * @throws UnexpectedValueException
+     */
+    public function setHttpKernel(string|HttpKernelInterface $kernel): static
     {
         if (is_string($kernel)) {
             $kernel = new $kernel;
@@ -61,9 +72,27 @@ class Server
         return $this;
     }
 
+    /**
+     * @param string|WSKernelInterface $kernel
+     * @return $this
+     * @throws UnexpectedValueException
+     */
     public function setWebsocketKernel(string|WSKernelInterface $kernel): static
     {
+        if (is_string($kernel)) {
+            $kernel = new $kernel;
+        }
+
+        if (!$kernel instanceof WSKernelInterface) {
+            throw new UnexpectedValueException('Kernel must implement ' . WSKernelInterface::class);
+        }
+
         $this->wsKernel = $kernel;
+
+        foreach ($this->wsKernel->getHandlers() as $path => $handler) {
+            $this->websocketHandlers[$path] = new $handler($this);
+        }
+
         return $this;
     }
 
@@ -103,7 +132,7 @@ class Server
 
     public function findHandler(string $path): ?WebsocketHandlerInterface
     {
-        foreach ($this->wsKernel->getHandlers() as $handlerPath => $handler) {
+        foreach ($this->websocketHandlers as $handlerPath => $handler) {
             if ($path == $handlerPath) return $handler;
         }
 
@@ -127,9 +156,9 @@ class Server
 
     public function run(): void
     {
-        if (empty($this->websocketHandlers)) {  // Create http server if websocket is not being used
+        if ($this->wsKernel->hasHandlers() && !$this->httpKernel->hasHandler()) {  // Create http server if websocket is not being used
             $this->server = new \Swoole\Http\Server($this->host, $this->port);
-        } else {    // Create websocket server if websocket is being used
+        } else {   // Create websocket server if websocket is being used
             $this->server = new \Swoole\Websocket\Server($this->host, $this->port);
         }
 
@@ -139,8 +168,8 @@ class Server
 
         $this->server->on('start', function () {
             if (isset($this->onStartCallback)) {
-                $cb = $this->onStartCallback;
-                $cb($this->server);
+                $callback = $this->onStartCallback;
+                $callback($this->server);
             }
         });
 
@@ -170,7 +199,7 @@ class Server
         });
 
         // CONNECTION MESSAGES
-        if (isset($this->websocketHandlers)) {
+        if ($this->wsKernel->hasHandlers()) {
             $this->server->on('message', function (\Swoole\Http\Server $server, Frame $frame) {
                 // Execute Handler 'onMessage()'
                 $this->findHandlerByFD($frame->fd)?->onMessage(
@@ -181,7 +210,7 @@ class Server
         }
 
         // CLOSE CONNECTION
-        $this->server->on('close', function (\Swoole\WebSocket\Server $server, int $fd) {
+        $this->server->on('close', function (\Swoole\WebSocket\Server|\Swoole\Http\Server $server, int $fd) {
             $this->findHandlerByFD($fd)?->onClose($this->makeConnection($fd));
         });
 
