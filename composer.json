@@ -12,7 +12,8 @@
     "require": {
         "php": ">=8.1",
         "phprtc/utils": "dev-master",
-        "phprtc/contracts": "dev-master"
+        "phprtc/contracts": "dev-master",
+        "evenement/evenement": "^3.0"
     },
     "autoload": {
         "psr-4": {
