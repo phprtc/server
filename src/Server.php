@@ -3,8 +3,8 @@
 namespace RTC\Server;
 
 use Closure;
-use JetBrains\PhpStorm\Pure;
 use RTC\Contracts\Http\KernelInterface as HttpKernelInterface;
+use RTC\Contracts\Server\ServerInterface;
 use RTC\Contracts\Websocket\ConnectionInterface;
 use RTC\Contracts\Websocket\KernelInterface as WSKernelInterface;
 use RTC\Contracts\Websocket\WebsocketHandlerInterface;
@@ -16,7 +16,7 @@ use Swoole\Http2\Request as Http2Request;
 use Swoole\Table;
 use Swoole\WebSocket\Frame;
 
-class Server
+class Server implements ServerInterface
 {
     protected \Swoole\Websocket\Server|\Swoole\Http\Server $server;
     protected HttpKernelInterface $httpKernel;
@@ -112,7 +112,7 @@ class Server
         string $data,
         int    $opcode = 1,
         int    $flags = SWOOLE_WEBSOCKET_FLAG_FIN
-    )
+    ): void
     {
         if ($this->server->isEstablished($fd)) {
             $this->server->push($fd, $data, $opcode, $flags);
@@ -148,7 +148,7 @@ class Server
         return null;
     }
 
-    #[Pure] public function makeConnection(int $fd): ConnectionInterface
+    public function makeConnection(int $fd): ConnectionInterface
     {
         return new Connection($this, $fd);
     }
