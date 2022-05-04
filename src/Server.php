@@ -236,7 +236,7 @@ class Server implements ServerInterface
 
         // Fire readiness event
         if ($hasWSKernel && $this->wsKernel->hasHandlers()) {
-            foreach ($this->wsKernel->getHandlers() as $handler) {
+            foreach ($this->websocketHandlers as $handler) {
                 $handler->onReady();
             }
         }
