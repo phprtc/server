@@ -156,13 +156,19 @@ class Server implements ServerInterface
 
     public function run(): void
     {
-        if ($this->wsKernel->hasHandlers() && !$this->httpKernel->hasHandler()) {  // Create http server if websocket is not being used
+        $hasHttpKernel = isset($this->httpKernel);
+        $hasWSKernel = isset($this->wsKernel);
+
+        if (
+            ($hasWSKernel && $this->wsKernel->hasHandlers())
+            && ($hasHttpKernel && !$this->httpKernel->hasHandler())
+        ) {  // Create http server if websocket is not being used
             $this->server = new \Swoole\Http\Server($this->host, $this->port);
         } else {   // Create websocket server if websocket is being used
             $this->server = new \Swoole\Websocket\Server($this->host, $this->port);
         }
 
-        if ($this->httpKernel->hasHandler()) {
+        if ($hasHttpKernel && $this->httpKernel->hasHandler()) {
             $this->server->on('request', new HttpHandler($this->httpKernel->getHandler(), $this->httpKernel));
         }
 
@@ -215,12 +221,12 @@ class Server implements ServerInterface
         });
 
         // Fire readiness event
-        if ($this->httpKernel->hasHandler()) {
+        if ($hasHttpKernel && $this->httpKernel->hasHandler()) {
             $this->httpKernel->getHandler()->onReady();
         }
 
         // Fire readiness event
-        if ($this->wsKernel->hasHandlers()) {
+        if ($hasWSKernel && $this->wsKernel->hasHandlers()) {
             foreach ($this->wsKernel->getHandlers() as $handler) {
                 $handler->onReady();
             }
