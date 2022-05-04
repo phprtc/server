@@ -11,6 +11,7 @@ use RTC\Contracts\Websocket\WebsocketHandlerInterface;
 use RTC\Server\Exceptions\UnexpectedValueException;
 use RTC\Server\Facades\HttpHandler;
 use RTC\Websocket\Connection;
+use RuntimeException;
 use Swoole\Http\Request as Http1Request;
 use Swoole\Http2\Request as Http2Request;
 use Swoole\Table;
@@ -158,6 +159,10 @@ class Server implements ServerInterface
     {
         $hasHttpKernel = isset($this->httpKernel);
         $hasWSKernel = isset($this->wsKernel);
+
+        if (!$hasHttpKernel && !$hasWSKernel) {
+            throw new RuntimeException('Please provide either websocket or http kernel');
+        }
 
         if (
             ($hasWSKernel && $this->wsKernel->hasHandlers())
