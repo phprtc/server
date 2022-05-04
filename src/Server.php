@@ -164,6 +164,10 @@ class Server implements ServerInterface
             throw new RuntimeException('Please provide either websocket or http kernel');
         }
 
+        if (!$hasHttpKernel && !$this->wsKernel->hasHandlers()){
+            throw new RuntimeException('Please provide websocket handler');
+        }
+
         if (
             ($hasWSKernel && $this->wsKernel->hasHandlers())
             && ($hasHttpKernel && !$this->httpKernel->hasHandler())
