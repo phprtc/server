@@ -214,6 +214,18 @@ class Server implements ServerInterface
             $this->findHandlerByFD($fd)?->onClose($this->makeConnection($fd));
         });
 
+        // Fire readiness event
+        if ($this->httpKernel->hasHandler()) {
+            $this->httpKernel->getHandler()->onReady();
+        }
+
+        // Fire readiness event
+        if ($this->wsKernel->hasHandlers()) {
+            foreach ($this->wsKernel->getHandlers() as $handler) {
+                $handler->onReady();
+            }
+        }
+
         $this->server->set($this->settings);
         $this->server->start();
     }
