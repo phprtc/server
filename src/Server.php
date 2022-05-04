@@ -18,6 +18,8 @@ use Swoole\WebSocket\Frame;
 
 class Server implements ServerInterface
 {
+    private static ServerInterface $instance;
+
     protected \Swoole\Websocket\Server|\Swoole\Http\Server $server;
     protected HttpKernelInterface $httpKernel;
     protected WSKernelInterface $wsKernel;
@@ -37,8 +39,22 @@ class Server implements ServerInterface
         return new static($host, $port);
     }
 
+    public static function push(
+        int    $fd,
+        string $data,
+        int    $opcode = 1,
+        int    $flags = SWOOLE_WEBSOCKET_FLAG_FIN
+    )
+    {
+        if (self::$instance->server->isEstablished($fd)) {
+            self::$instance->server->push($fd, $data, $opcode, $flags);
+        }
+    }
+
     public function __construct(protected string $host, protected int $port)
     {
+        self::$instance = $this;
+
         $this->connections = new Table(1024);
         $this->connections->column('path', Table::TYPE_STRING, 100);
         $this->connections->create();
@@ -105,18 +121,6 @@ class Server implements ServerInterface
     {
         $this->onStartCallback = $callback;
         return $this;
-    }
-
-    public function push(
-        int    $fd,
-        string $data,
-        int    $opcode = 1,
-        int    $flags = SWOOLE_WEBSOCKET_FLAG_FIN
-    ): void
-    {
-        if ($this->server->isEstablished($fd)) {
-            $this->server->push($fd, $data, $opcode, $flags);
-        }
     }
 
     public function exists(int $fd): bool
