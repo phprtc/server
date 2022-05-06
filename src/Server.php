@@ -5,6 +5,7 @@ namespace RTC\Server;
 use Closure;
 use RTC\Contracts\Http\KernelInterface as HttpKernelInterface;
 use RTC\Contracts\Server\ServerInterface;
+use RTC\Contracts\Websocket\CommandInterface;
 use RTC\Contracts\Websocket\ConnectionInterface;
 use RTC\Contracts\Websocket\FrameInterface;
 use RTC\Contracts\Websocket\KernelInterface as WSKernelInterface;
@@ -55,6 +56,7 @@ class Server implements ServerInterface
     {
         $this->settings['document_root'] = $path;
         $this->settings['enable_static_handler'] = true;
+        $this->settings['open_websocket_close_frame'] = true;
 
         return $this;
     }
@@ -160,9 +162,14 @@ class Server implements ServerInterface
         return new Connection($this, $fd);
     }
 
-    public function makeFrame(Frame $frame, array $decodedMessage): FrameInterface
+    public function makeFrame(Frame $frame): FrameInterface
     {
-        return new \RTC\Websocket\Frame($frame, $decodedMessage);
+        return new \RTC\Websocket\Frame($frame);
+    }
+
+    public function makeCommand(FrameInterface $frame): CommandInterface
+    {
+        return new \RTC\Websocket\Frame($frame);
     }
 
     public function run(): void
@@ -274,7 +281,7 @@ class Server implements ServerInterface
 
             // Invoke 'onCommand()'
             if (!empty($jsonDecoded) && array_key_exists('command', $jsonDecoded)) {
-                $handler->onCommand($rtcConnection, $rtcFrame);
+                $handler->onCommand($rtcConnection, $this->makeCommand($rtcFrame));
             }
         }
     }
