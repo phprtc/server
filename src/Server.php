@@ -12,6 +12,7 @@ use RTC\Contracts\Websocket\KernelInterface as WSKernelInterface;
 use RTC\Contracts\Websocket\WebsocketHandlerInterface;
 use RTC\Server\Exceptions\UnexpectedValueException;
 use RTC\Server\Facades\HttpHandler;
+use RTC\Websocket\Command;
 use RTC\Websocket\Connection;
 use RuntimeException;
 use Swoole\Http\Request as Http1Request;
@@ -169,7 +170,7 @@ class Server implements ServerInterface
 
     public function makeCommand(FrameInterface $frame): CommandInterface
     {
-        return new \RTC\Websocket\Frame($frame);
+        return new Command($frame);
     }
 
     public function run(): void
@@ -275,7 +276,7 @@ class Server implements ServerInterface
                 $jsonDecoded = json_decode($frame->data, true);
 
                 $rtcConnection = $this->makeConnection($frame->fd);
-                $rtcFrame = $this->makeFrame($frame, $jsonDecoded);
+                $rtcFrame = $this->makeFrame($frame);
 
                 // Invoke 'onMessage()' method
                 $handler->onMessage($rtcConnection, $rtcFrame);
