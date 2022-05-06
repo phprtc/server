@@ -231,7 +231,7 @@ class Server implements ServerInterface
         $this->server->start();
     }
 
-    private function handleOnOpen(\Swoole\WebSocket\Server $server, Http1Request|Http2Request $request)
+    public function handleOnOpen(\Swoole\WebSocket\Server $server, Http1Request|Http2Request $request)
     {
         // Websocket
         if ($this->wsHasHandlers) {
@@ -259,7 +259,7 @@ class Server implements ServerInterface
         }
     }
 
-    private function handleOnMessage(\Swoole\Http\Server $server, Frame $frame)
+    public function handleOnMessage(\Swoole\Http\Server $server, Frame $frame)
     {
         $handler = $this->findHandlerByFD($frame->fd);
 
