@@ -268,20 +268,22 @@ class Server implements ServerInterface
 
     public function handleOnMessage(\Swoole\Http\Server $server, Frame $frame)
     {
-        $handler = $this->findHandlerByFD($frame->fd);
+        if ($this->hasWsKernel) {
+            $handler = $this->findHandlerByFD($frame->fd);
 
-        if ($handler) {
-            $jsonDecoded = json_decode($frame->data, true);
+            if ($handler) {
+                $jsonDecoded = json_decode($frame->data, true);
 
-            $rtcConnection = $this->makeConnection($frame->fd);
-            $rtcFrame = $this->makeFrame($frame, $jsonDecoded);
+                $rtcConnection = $this->makeConnection($frame->fd);
+                $rtcFrame = $this->makeFrame($frame, $jsonDecoded);
 
-            // Invoke 'onMessage()' method
-            $handler->onMessage($rtcConnection, $rtcFrame);
+                // Invoke 'onMessage()' method
+                $handler->onMessage($rtcConnection, $rtcFrame);
 
-            // Invoke 'onCommand()'
-            if (!empty($jsonDecoded) && array_key_exists('command', $jsonDecoded)) {
-                $handler->onCommand($rtcConnection, $this->makeCommand($rtcFrame));
+                // Invoke 'onCommand()'
+                if (!empty($jsonDecoded) && array_key_exists('command', $jsonDecoded)) {
+                    $handler->onCommand($rtcConnection, $this->makeCommand($rtcFrame));
+                }
             }
         }
     }
