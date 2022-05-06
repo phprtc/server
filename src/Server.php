@@ -6,6 +6,7 @@ use Closure;
 use RTC\Contracts\Http\KernelInterface as HttpKernelInterface;
 use RTC\Contracts\Server\ServerInterface;
 use RTC\Contracts\Websocket\ConnectionInterface;
+use RTC\Contracts\Websocket\FrameInterface;
 use RTC\Contracts\Websocket\KernelInterface as WSKernelInterface;
 use RTC\Contracts\Websocket\WebsocketHandlerInterface;
 use RTC\Server\Exceptions\UnexpectedValueException;
@@ -24,6 +25,11 @@ class Server implements ServerInterface
     protected WSKernelInterface $wsKernel;
     protected Closure $onStartCallback;
     protected Table $connections;
+
+    protected bool $hasWsKernel = false;
+    protected bool $hasHttpKernel = false;
+    protected bool $wsHasHandlers = false;
+    protected bool $httpHasHandler = false;
 
     /**
      * @var WebsocketHandlerInterface[]
@@ -154,42 +160,81 @@ class Server implements ServerInterface
         return new Connection($this, $fd);
     }
 
+    public function makeFrame(Frame $frame, array $decodedMessage): FrameInterface
+    {
+        return new \RTC\Websocket\Frame($frame, $decodedMessage);
+    }
 
     public function run(): void
     {
-        $hasHttpKernel = isset($this->httpKernel);
-        $hasWSKernel = isset($this->wsKernel);
+        $this->hasHttpKernel = isset($this->httpKernel);
+        $this->hasWsKernel = isset($this->wsKernel);
+        $this->wsHasHandlers = $this->hasWsKernel && $this->wsKernel->hasHandlers();
+        $this->httpHasHandler = $this->hasHttpKernel && $this->httpKernel->hasHandler();
 
-        if (!$hasHttpKernel && !$hasWSKernel) {
+        if (!$this->hasHttpKernel && !$this->hasWsKernel) {
             throw new RuntimeException('Please provide either websocket or http kernel');
         }
 
-        if (!$hasHttpKernel && !$this->wsKernel->hasHandlers()){
+        if (!$this->hasHttpKernel && !$this->wsHasHandlers) {
             throw new RuntimeException('Please provide websocket handler');
         }
 
         if (
-            ($hasWSKernel && $this->wsKernel->hasHandlers())
-            && ($hasHttpKernel && !$this->httpKernel->hasHandler())
+            ($this->hasWsKernel && $this->wsHasHandlers)
+            && ($this->hasHttpKernel && !$this->httpHasHandler)
         ) {  // Create http server if websocket is not being used
             $this->server = new \Swoole\Http\Server($this->host, $this->port);
         } else {   // Create websocket server if websocket is being used
             $this->server = new \Swoole\Websocket\Server($this->host, $this->port);
         }
 
-        if ($hasHttpKernel && $this->httpKernel->hasHandler()) {
-            $this->server->on('request', new HttpHandler($this->httpKernel->getHandler(), $this->httpKernel));
+        if ($this->hasHttpKernel && $this->httpHasHandler) {
+            $this->server->on('request', new HttpHandler(
+                handler: $this->httpKernel->getHandler(),
+                kernel: $this->httpKernel
+            ));
         }
 
         $this->server->on('start', function () {
             if (isset($this->onStartCallback)) {
-                $callback = $this->onStartCallback;
-                $callback($this->server);
+                call_user_func($this->onStartCallback, $this->server);
             }
         });
 
         // NEW CONNECTION
-        $this->server->on('open', function (\Swoole\WebSocket\Server $server, Http1Request|Http2Request $request) {
+        $this->server->on('open', [$this, 'handleOnOpen']);
+
+        // CONNECTION MESSAGES
+        if ($this->wsHasHandlers) {
+            $this->server->on('message', [$this, 'handleOnMessage']);
+        }
+
+        // CLOSE CONNECTION
+        $this->server->on('close', function (\Swoole\WebSocket\Server|\Swoole\Http\Server $server, int $fd) {
+            $this->findHandlerByFD($fd)?->onClose($this->makeConnection($fd));
+        });
+
+        // Fire HTTP handler readiness event
+        if ($this->hasHttpKernel && $this->httpHasHandler) {
+            $this->httpKernel->getHandler()->onReady();
+        }
+
+        // Fire WebSocket handler readiness event
+        if ($this->hasWsKernel && $this->wsHasHandlers) {
+            foreach ($this->websocketHandlers as $handler) {
+                $handler->onReady();
+            }
+        }
+
+        $this->server->set($this->settings);
+        $this->server->start();
+    }
+
+    private function handleOnOpen(\Swoole\WebSocket\Server $server, Http1Request|Http2Request $request)
+    {
+        // Websocket
+        if ($this->wsHasHandlers) {
             $handler = $this->findHandler($request->server['request_uri']);
 
             // Construct Connection Object
@@ -211,37 +256,26 @@ class Server implements ServerInterface
             $this->connections->set($request->fd, ['path' => $request->server['request_uri']]);
 
             $handler->onOpen($connection);
-        });
-
-        // CONNECTION MESSAGES
-        if ($this->wsKernel->hasHandlers()) {
-            $this->server->on('message', function (\Swoole\Http\Server $server, Frame $frame) {
-                // Execute Handler 'onMessage()'
-                $this->findHandlerByFD($frame->fd)?->onMessage(
-                    $this->makeConnection($frame->fd),
-                    new \RTC\Websocket\Frame($frame)
-                );
-            });
         }
+    }
 
-        // CLOSE CONNECTION
-        $this->server->on('close', function (\Swoole\WebSocket\Server|\Swoole\Http\Server $server, int $fd) {
-            $this->findHandlerByFD($fd)?->onClose($this->makeConnection($fd));
-        });
+    private function handleOnMessage(\Swoole\Http\Server $server, Frame $frame)
+    {
+        $handler = $this->findHandlerByFD($frame->fd);
 
-        // Fire readiness event
-        if ($hasHttpKernel && $this->httpKernel->hasHandler()) {
-            $this->httpKernel->getHandler()->onReady();
-        }
+        if ($handler) {
+            $jsonDecoded = json_decode($frame->data, true);
 
-        // Fire readiness event
-        if ($hasWSKernel && $this->wsKernel->hasHandlers()) {
-            foreach ($this->websocketHandlers as $handler) {
-                $handler->onReady();
+            $rtcConnection = $this->makeConnection($frame->fd);
+            $rtcFrame = $this->makeFrame($frame, $jsonDecoded);
+
+            // Invoke 'onMessage()' method
+            $handler->onMessage($rtcConnection, $rtcFrame);
+
+            // Invoke 'onCommand()'
+            if (!empty($jsonDecoded) && array_key_exists('command', $jsonDecoded)) {
+                $handler->onCommand($rtcConnection, $rtcFrame);
             }
         }
-
-        $this->server->set($this->settings);
-        $this->server->start();
     }
 }
