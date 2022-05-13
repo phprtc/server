@@ -252,7 +252,7 @@ class Server implements ServerInterface
             if (empty($handler)) {
                 $connection->send('conn.rejected', [
                     'status' => 404,
-                    'reason' => 'Handler Not Found'
+                    'reason' => "No handler for route '{$request->server['request_uri']}' found."
                 ]);
 
                 $connection->close();
