@@ -28,6 +28,8 @@ class Server implements ServerInterface
     protected Closure $onStartCallback;
     protected Table $connections;
 
+    private static Server $instance;
+
     protected bool $hasWsKernel = false;
     protected bool $hasHttpKernel = false;
     protected bool $wsHasHandlers = false;
@@ -48,6 +50,8 @@ class Server implements ServerInterface
 
     public function __construct(protected string $host, protected int $port)
     {
+        self::$instance = $this;
+
         $this->connections = new Table(1024);
         $this->connections->column('path', Table::TYPE_STRING, 100);
         $this->connections->create();
@@ -287,5 +291,10 @@ class Server implements ServerInterface
                 }
             }
         }
+    }
+
+    public static function get(): Server
+    {
+        return self::$instance;
     }
 }
