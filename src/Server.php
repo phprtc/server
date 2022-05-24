@@ -169,7 +169,7 @@ class Server implements ServerInterface
     public function makeConnection(int $fd): ConnectionInterface
     {
         /**@phpstan-ignore-next-line * */
-        return new Connection($this, $fd);
+        return new Connection($fd);
     }
 
     public function makeFrame(Frame $frame): FrameInterface
