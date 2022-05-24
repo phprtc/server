@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace RTC\Server;
 
@@ -28,7 +29,10 @@ class Server implements ServerInterface
     protected Closure $onStartCallback;
     protected Table $connections;
 
-    private static Server $instance;
+    /**
+     * @var static $instance
+     */
+    private static ServerInterface $instance;
 
     protected bool $hasWsKernel = false;
     protected bool $hasHttpKernel = false;
@@ -128,7 +132,7 @@ class Server implements ServerInterface
         int    $flags = SWOOLE_WEBSOCKET_FLAG_FIN
     ): void
     {
-        if ($this->server->isEstablished($fd)) {
+        if ($this->server instanceof \Swoole\WebSocket\Server && $this->server->isEstablished($fd)) {
             $this->server->push($fd, $data, $opcode, $flags);
         }
     }
@@ -155,8 +159,8 @@ class Server implements ServerInterface
 
     public function findHandlerByFD(int $fd): ?WebsocketHandlerInterface
     {
-        if ($this->connections->exist($fd)) {
-            return $this->websocketHandlers[$this->connections->get($fd, 'path')] ?? null;
+        if ($this->connections->exist(strval($fd))) {
+            return $this->websocketHandlers[$this->connections->get(strval($fd), 'path')] ?? null;
         }
 
         return null;
@@ -164,16 +168,19 @@ class Server implements ServerInterface
 
     public function makeConnection(int $fd): ConnectionInterface
     {
+        /**@phpstan-ignore-next-line * */
         return new Connection($this, $fd);
     }
 
     public function makeFrame(Frame $frame): FrameInterface
     {
+        /**@phpstan-ignore-next-line * */
         return new \RTC\Websocket\Frame($frame);
     }
 
     public function makeCommand(FrameInterface $frame): CommandInterface
     {
+        /**@phpstan-ignore-next-line * */
         return new Command($frame);
     }
 
@@ -243,8 +250,12 @@ class Server implements ServerInterface
         $this->server->start();
     }
 
-    public function handleOnOpen(\Swoole\WebSocket\Server $server, Http1Request|Http2Request $request)
+    public function handleOnOpen(\Swoole\WebSocket\Server $server, Http1Request|Http2Request $request): void
     {
+        if ($request instanceof Http2Request) {
+            throw new RuntimeException('Http2 is not supported yet.');
+        }
+
         // Websocket
         if ($this->wsHasHandlers) {
             $handler = $this->findHandler($request->server['request_uri']);
@@ -265,13 +276,13 @@ class Server implements ServerInterface
             }
 
             // Track The Connection
-            $this->connections->set($request->fd, ['path' => $request->server['request_uri']]);
+            $this->connections->set(strval($request->fd), ['path' => $request->server['request_uri']]);
 
             $handler->onOpen($connection);
         }
     }
 
-    public function handleOnMessage(\Swoole\Http\Server $server, Frame $frame)
+    public function handleOnMessage(\Swoole\Http\Server $server, Frame $frame): void
     {
         if ($this->hasWsKernel) {
             $handler = $this->findHandlerByFD($frame->fd);
@@ -293,7 +304,7 @@ class Server implements ServerInterface
         }
     }
 
-    public static function get(): Server
+    public static function get(): static
     {
         return self::$instance;
     }
