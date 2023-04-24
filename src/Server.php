@@ -11,6 +11,7 @@ use RTC\Contracts\Websocket\ConnectionInterface;
 use RTC\Contracts\Websocket\FrameInterface;
 use RTC\Contracts\Websocket\KernelInterface as WSKernelInterface;
 use RTC\Contracts\Websocket\WebsocketHandlerInterface;
+use RTC\Server\Enums\LogRotation;
 use RTC\Server\Exceptions\UnexpectedValueException;
 use RTC\Server\Facades\HttpHandler;
 use RTC\Websocket\Command;
@@ -68,6 +69,31 @@ class Server implements ServerInterface
         $this->settings['open_websocket_close_frame'] = true;
 
         return $this;
+    }
+
+    public function setPidFile(string $path): static
+    {
+        $this->settings['pid_file'] = $path;
+        return $this;
+    }
+
+    public function setLogOption(
+        string      $filePath,
+        int         $level = 1,
+        LogRotation $rotation = LogRotation::DAILY,
+        string      $format = '%Y-%m-%d %H:%M:%S',
+        bool        $withSeconds = false,
+        bool        $slowLog = false
+    ): static
+    {
+        return $this->set([
+            'log_level' => $level,
+            'log_file' => $filePath,
+            'log_rotation' => $rotation->getValue(),
+            'log_date_format' => $format,
+            'log_date_with_microseconds' => $withSeconds,
+            'request_slowlog_file' => $slowLog,
+        ]);
     }
 
     /**
