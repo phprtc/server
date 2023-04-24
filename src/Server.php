@@ -89,7 +89,6 @@ class Server implements ServerInterface
         LogRotation $rotation = LogRotation::DAILY,
         string      $format = '%Y-%m-%d %H:%M:%S',
         bool        $withSeconds = false,
-        bool        $slowLog = false
     ): static
     {
         return $this->set([
@@ -98,7 +97,6 @@ class Server implements ServerInterface
             'log_rotation' => $rotation->getValue(),
             'log_date_format' => $format,
             'log_date_with_microseconds' => $withSeconds,
-            'request_slowlog_file' => $slowLog,
         ]);
     }
 
