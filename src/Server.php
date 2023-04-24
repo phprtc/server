@@ -62,6 +62,12 @@ class Server implements ServerInterface
         $this->connections->create();
     }
 
+    public function daemonize(): static
+    {
+        $this->settings['daemonize'] = 1;
+        return $this;
+    }
+
     public function setDocumentRoot(string $path): static
     {
         $this->settings['document_root'] = $path;
