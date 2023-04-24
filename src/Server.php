@@ -6,16 +6,16 @@ namespace RTC\Server;
 use Closure;
 use RTC\Contracts\Http\KernelInterface as HttpKernelInterface;
 use RTC\Contracts\Server\ServerInterface;
-use RTC\Contracts\Websocket\CommandInterface;
 use RTC\Contracts\Websocket\ConnectionInterface;
+use RTC\Contracts\Websocket\EventInterface;
 use RTC\Contracts\Websocket\FrameInterface;
 use RTC\Contracts\Websocket\KernelInterface as WSKernelInterface;
 use RTC\Contracts\Websocket\WebsocketHandlerInterface;
 use RTC\Server\Enums\LogRotation;
 use RTC\Server\Exceptions\UnexpectedValueException;
 use RTC\Server\Facades\HttpHandler;
-use RTC\Websocket\Command;
 use RTC\Websocket\Connection;
+use RTC\Websocket\Event;
 use RuntimeException;
 use Swoole\Http\Request as Http1Request;
 use Swoole\Http2\Request as Http2Request;
@@ -204,10 +204,10 @@ class Server implements ServerInterface
         return new \RTC\Websocket\Frame($frame);
     }
 
-    public function makeCommand(FrameInterface $frame): CommandInterface
+    public function makeEvent(FrameInterface $frame): EventInterface
     {
         /**@phpstan-ignore-next-line * */
-        return new Command($frame);
+        return new Event($frame);
     }
 
     public function run(): void
@@ -323,8 +323,8 @@ class Server implements ServerInterface
                 $handler->onMessage($rtcConnection, $rtcFrame);
 
                 // Invoke 'onCommand()'
-                if (!empty($jsonDecoded) && array_key_exists('command', $jsonDecoded)) {
-                    $handler->onCommand($rtcConnection, $this->makeCommand($rtcFrame));
+                if (!empty($jsonDecoded) && array_key_exists('event', $jsonDecoded)) {
+                    $handler->onEvent($rtcConnection, $this->makeEvent($rtcFrame));
                 }
             }
         }
