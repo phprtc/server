@@ -428,15 +428,13 @@ class Server implements ServerInterface
             }
 
             // Message Room
-            if (WSRoomTerm::MESSAGE->is($event->getEvent())) {
-                foreach ($this->wsRooms as $room) {
-                    if ($room->getName() == $event->getRoom()) {
-                        $room->sendAsClient(
-                            connection: $connection,
-                            event: $event->getRoom(),
-                            message: $event->getMessage(),
-                        );
-                    }
+            foreach ($this->wsRooms as $room) {
+                if ($room->getName() == $event->getRoom()) {
+                    $room->sendAsClient(
+                        connection: $connection,
+                        event: $event->getRoom(),
+                        message: $event->getMessage(),
+                    );
                 }
             }
         }
