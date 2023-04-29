@@ -21,12 +21,6 @@
             "RTC\\Server\\Tests\\": "tests/"
         }
     },
-    "repositories": [
-        {
-            "type": "composer",
-            "url": "https://phprtc.repo.repman.io"
-        }
-    ],
     "require-dev": {
         "phpstan/phpstan": "^1.4",
         "phpunit/phpunit": "^9.5",
