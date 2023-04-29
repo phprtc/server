@@ -175,12 +175,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/phprtc/contracts.git",
-                "reference": "91b914f197e5d85e67bc0b71ba723e6763a983a4"
+                "reference": "5e503d1067b3115657a12a916feca71832bbf072"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phprtc/contracts/zipball/91b914f197e5d85e67bc0b71ba723e6763a983a4",
-                "reference": "91b914f197e5d85e67bc0b71ba723e6763a983a4",
+                "url": "https://api.github.com/repos/phprtc/contracts/zipball/5e503d1067b3115657a12a916feca71832bbf072",
+                "reference": "5e503d1067b3115657a12a916feca71832bbf072",
                 "shasum": ""
             },
             "require": {
@@ -215,7 +215,7 @@
                 "issues": "https://github.com/phprtc/contracts/issues",
                 "source": "https://github.com/phprtc/contracts/tree/master"
             },
-            "time": "2023-04-29T13:59:08+00:00"
+            "time": "2023-04-29T16:59:45+00:00"
         },
         {
             "name": "phprtc/utils",
@@ -223,12 +223,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/phprtc/utils.git",
-                "reference": "04df0cc31c17e6a7dc225b9701a4d0558f8b3b74"
+                "reference": "50f932447fcebbe6fbf9dae3e3155dbb574d6fab"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phprtc/utils/zipball/04df0cc31c17e6a7dc225b9701a4d0558f8b3b74",
-                "reference": "04df0cc31c17e6a7dc225b9701a4d0558f8b3b74",
+                "url": "https://api.github.com/repos/phprtc/utils/zipball/50f932447fcebbe6fbf9dae3e3155dbb574d6fab",
+                "reference": "50f932447fcebbe6fbf9dae3e3155dbb574d6fab",
                 "shasum": ""
             },
             "require": {
@@ -256,7 +256,7 @@
                 "issues": "https://github.com/phprtc/utils/issues",
                 "source": "https://github.com/phprtc/utils/tree/master"
             },
-            "time": "2022-04-10T17:24:01+00:00"
+            "time": "2023-04-29T16:40:45+00:00"
         },
         {
             "name": "psr/http-factory",

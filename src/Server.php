@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace RTC\Server;
 
 use Closure;
+use RTC\Contracts\Exceptions\UnexpectedValueException;
 use RTC\Contracts\Http\KernelInterface as HttpKernelInterface;
 use RTC\Contracts\Server\ServerInterface;
 use RTC\Contracts\Websocket\ConnectionInterface;
@@ -13,7 +14,8 @@ use RTC\Contracts\Websocket\KernelInterface as WSKernelInterface;
 use RTC\Contracts\Websocket\RoomInterface;
 use RTC\Contracts\Websocket\WebsocketHandlerInterface;
 use RTC\Server\Enums\LogRotation;
-use RTC\Server\Exceptions\UnexpectedValueException;
+use RTC\Server\Enums\WSRoomTerm;
+use RTC\Server\Exceptions\RoomNotFoundException;
 use RTC\Server\Facades\HttpHandler;
 use RTC\Websocket\Connection;
 use RTC\Websocket\Event;
@@ -248,6 +250,27 @@ class Server implements ServerInterface
         return array_key_exists($name, $this->wsRooms);
     }
 
+    /**
+     * @param string $name
+     * @return RoomInterface
+     * @throws RoomNotFoundException
+     */
+    public function getRoom(string $name): RoomInterface
+    {
+        if (!$this->roomExists($name)) {
+            return $this->wsRooms[$name];
+        }
+
+        throw new RoomNotFoundException("Room with name \"$name\" not found");
+    }
+
+    public function getOrCreateRoom(string $name): RoomInterface
+    {
+        return $this->roomExists($name)
+            ? $this->getRoom($name)
+            : $this->createRoom($name, $this->size);
+    }
+
     public function run(): void
     {
         $this->hasHttpKernel = isset($this->httpKernel);
@@ -386,13 +409,34 @@ class Server implements ServerInterface
     protected function dispatchRoomMessage(ConnectionInterface $connection, EventInterface $event): void
     {
         if ($event->getRoom()) {
-            foreach ($this->wsRooms as $room) {
-                if ($room->getName() == $event->getRoom()) {
-                    $room->sendAsClient(
-                        connection: $connection,
-                        event: $event->getRoom(),
-                        message: $event->getMessage(),
-                    );
+            // Create Room
+            if (WSRoomTerm::CREATE->is($event->getEvent())) {
+                $this->createRoom($event->getRoom(), $this->size);
+                return;
+            }
+
+            // Join Room
+            if (WSRoomTerm::JOIN->is($event->getEvent())) {
+                $this->getOrCreateRoom($event->getRoom())->add($connection);
+                return;
+            }
+
+            // Leave Room
+            if (WSRoomTerm::LEAVE->is($event->getEvent())) {
+                $this->getOrCreateRoom($event->getRoom())->remove($connection);
+                return;
+            }
+
+            // Message Room
+            if (WSRoomTerm::MESSAGE->is($event->getEvent())) {
+                foreach ($this->wsRooms as $room) {
+                    if ($room->getName() == $event->getRoom()) {
+                        $room->sendAsClient(
+                            connection: $connection,
+                            event: $event->getRoom(),
+                            message: $event->getMessage(),
+                        );
+                    }
                 }
             }
         }
