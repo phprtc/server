@@ -387,7 +387,11 @@ class Server implements ServerInterface
                     $event = $this->makeEvent($rtcFrame);
                     $handler->onEvent($rtcConnection, $event);
 
-                    $this->dispatchRoomMessage($rtcConnection, $event);
+                    $receiver = $event->getReceiver();
+
+                    if (WSIntendedReceiver::ROOM->is($receiver->getType())) {
+                        $this->dispatchRoomMessage($rtcConnection, $event);
+                    }
                 }
             }
         }
@@ -409,31 +413,33 @@ class Server implements ServerInterface
 
     protected function dispatchRoomMessage(ConnectionInterface $connection, EventInterface $event): void
     {
-        if (WSIntendedReceiver::ROOM->is($event->getIntendedReceiver()) && $event->getRoom()) {
+        $roomName = $event->getReceiver()->getName();
+
+        if ($roomName) {
             // Create Room
             if (WSRoomTerm::CREATE->is($event->getEvent())) {
-                $this->createRoom($event->getRoom(), $this->size);
+                $this->createRoom($roomName, $this->size);
                 return;
             }
 
             // Join Room
             if (WSRoomTerm::JOIN->is($event->getEvent())) {
-                $this->getOrCreateRoom($event->getRoom())->add($connection);
+                $this->getOrCreateRoom($roomName)->add($connection);
                 return;
             }
 
             // Leave Room
             if (WSRoomTerm::LEAVE->is($event->getEvent())) {
-                $this->getOrCreateRoom($event->getRoom())->remove($connection);
+                $this->getOrCreateRoom($roomName)->remove($connection);
                 return;
             }
 
             // Message Room
             foreach ($this->wsRooms as $room) {
-                if ($room->getName() == $event->getRoom()) {
+                if ($room->getName() == $roomName) {
                     $room->sendAsClient(
                         connection: $connection,
-                        event: $event->getRoom(),
+                        event: $roomName,
                         message: $event->getMessage(),
                     );
                 }

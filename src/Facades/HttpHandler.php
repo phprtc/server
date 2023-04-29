@@ -13,8 +13,6 @@ use RTC\Http\Request;
 use RTC\Http\Router\Dispatcher;
 use Swoole\Http\Request as Http1Request;
 use Swoole\Http\Response as Http1Response;
-use Swoole\Http2\Request as Http2Request;
-use Swoole\Http2\Response as Http2Response;
 use Throwable;
 
 class HttpHandler
@@ -27,21 +25,20 @@ class HttpHandler
     }
 
     /**
-     * @param Http1Request|Http2Request $swRequest
-     * @param Http1Response|Http2Response $swResponse
+     * @param Http1Request $swRequest
+     * @param Http1Response $swResponse
      * @return void
      * @throws throwable
      */
-    public function __invoke(Http1Request|Http2Request $swRequest, Http1Response|Http2Response $swResponse): void
+    public function __invoke(Http1Request $swRequest, Http1Response $swResponse): void
     {
         $httpMiddlewares = $this->kernel->getDefaultMiddlewares();
 
         // Dispatch http request routes if any is provided
         if ($this->handler->hasRouteCollector()) {
-            $method = $swRequest instanceof Http1Request
-                ? $swRequest->getMethod()
-                : $swRequest->method;
+            $method = $swRequest->getMethod();
 
+            /**@phpstan-ignore-next-line * */
             $dispatchResult = Dispatcher::create($this->handler->getRouteCollector())
                 ->dispatch($method, $swRequest->server['request_uri']);
         } else {
@@ -68,8 +65,8 @@ class HttpHandler
     }
 
     private function makeRequest(
-        Http1Request|Http2Request    $request,
-        Http1Response|Http2Response  $response,
+        Http1Request                 $request,
+        Http1Response                $response,
         KernelInterface              $kernel,
         DispatchResultInterface|null $dispatchResult,
     ): RequestInterface
