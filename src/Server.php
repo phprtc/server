@@ -281,11 +281,11 @@ class Server implements ServerInterface
         });
 
         // NEW CONNECTION
-        $this->server->on('open', [$this, 'handleOnOpen']);
+        $this->server->on('open', $this->handleOnOpen(...));
 
         // CONNECTION MESSAGES
         if ($this->wsHasHandlers) {
-            $this->server->on('message', [$this, 'handleOnMessage']);
+            $this->server->on('message', $this->handleOnMessage(...));
         }
 
         // CLOSE CONNECTION
