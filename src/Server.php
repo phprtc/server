@@ -15,9 +15,9 @@ use RTC\Contracts\Websocket\WebsocketHandlerInterface;
 use RTC\Server\Enums\LogRotation;
 use RTC\Server\Exceptions\UnexpectedValueException;
 use RTC\Server\Facades\HttpHandler;
-use RTC\Websocket\Room;
 use RTC\Websocket\Connection;
 use RTC\Websocket\Event;
+use RTC\Websocket\Room;
 use RuntimeException;
 use Swoole\Http\Request as Http1Request;
 use Swoole\Http2\Request as Http2Request;
@@ -49,6 +49,11 @@ class Server implements ServerInterface
 
     protected array $settings = [];
 
+    /**
+     * @var RoomInterface[] $wsRooms
+     */
+    protected array $wsRooms = [];
+
 
     public static function create(string $host, int $port, int $size = 2048): static
     {
@@ -57,8 +62,8 @@ class Server implements ServerInterface
 
     public function __construct(
         public readonly string $host,
-        public readonly int $port,
-        public readonly int $size
+        public readonly int    $port,
+        public readonly int    $size
     )
     {
         self::$instance = $this;
@@ -222,8 +227,20 @@ class Server implements ServerInterface
 
     public function createWebsocketRoom(string $name, int $size): RoomInterface
     {
-        /**@phpstan-ignore-next-line * */
-        return new Room($this, $name, $size);
+        /**
+         * @var RoomInterface $room
+         * @phpstan-ignore-next-line
+         */
+        $room = new Room($this, $name, $size);
+        $this->attachWebsocketRoom($room);
+
+        return $room;
+    }
+
+    public function attachWebsocketRoom(RoomInterface $room): static
+    {
+        $this->wsRooms[$room->getName()] = $room;
+        return $this;
     }
 
     public function run(): void
@@ -338,9 +355,27 @@ class Server implements ServerInterface
                 // Invoke 'onMessage()' method
                 $handler->onMessage($rtcConnection, $rtcFrame);
 
-                // Invoke 'onCommand()'
+                // Invoke 'onEvent()'
                 if (!empty($jsonDecoded) && array_key_exists('event', $jsonDecoded)) {
-                    $handler->onEvent($rtcConnection, $this->makeEvent($rtcFrame));
+                    $event = $this->makeEvent($rtcFrame);
+                    $handler->onEvent($rtcConnection, $event);
+
+                    $this->dispatchRoomMessage($rtcConnection, $event);
+                }
+            }
+        }
+    }
+
+    protected function dispatchRoomMessage(ConnectionInterface $connection, EventInterface $event): void
+    {
+        if ($event->getRoom()) {
+            foreach ($this->wsRooms as $room) {
+                if ($room->getName() == $event->getRoom()) {
+                    $room->sendAsClient(
+                        connection: $connection,
+                        event: $event->getRoom(),
+                        message: $event->getMessage(),
+                    );
                 }
             }
         }

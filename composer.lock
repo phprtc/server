@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "41ebe35dac66749f577417b1b5d5fb75",
+    "content-hash": "25cb6c712c33ec87e84526944a3c6713",
     "packages": [
         {
             "name": "evenement/evenement",
@@ -175,12 +175,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/phprtc/contracts.git",
-                "reference": "1777f893387b257a9936dc837656960b0676ee79"
+                "reference": "c4647da46aa8bfdf96848365c8b0fe3977a8e0e3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phprtc/contracts/zipball/1777f893387b257a9936dc837656960b0676ee79",
-                "reference": "1777f893387b257a9936dc837656960b0676ee79",
+                "url": "https://api.github.com/repos/phprtc/contracts/zipball/c4647da46aa8bfdf96848365c8b0fe3977a8e0e3",
+                "reference": "c4647da46aa8bfdf96848365c8b0fe3977a8e0e3",
                 "shasum": ""
             },
             "require": {
@@ -215,7 +215,7 @@
                 "issues": "https://github.com/phprtc/contracts/issues",
                 "source": "https://github.com/phprtc/contracts/tree/master"
             },
-            "time": "2023-04-29T12:39:57+00:00"
+            "time": "2023-04-29T13:26:46+00:00"
         },
         {
             "name": "phprtc/utils",
