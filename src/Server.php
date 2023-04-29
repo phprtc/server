@@ -267,9 +267,11 @@ class Server implements ServerInterface
 
     public function getOrCreateRoom(string $name): RoomInterface
     {
-        return $this->roomExists($name)
-            ? $this->getRoom($name)
-            : $this->createRoom($name, $this->size);
+        try {
+            return $this->getRoom($name);
+        } catch (RoomNotFoundException) {
+            return $this->createRoom($name, $this->size);
+        }
     }
 
     public function run(): void
