@@ -443,7 +443,7 @@ class Server implements ServerInterface
                 if ($room->getName() == $roomName) {
                     $room->sendAsClient(
                         connection: $connection,
-                        event: $roomName,
+                        event: $event->getEvent(),
                         message: $event->getMessage(),
                     );
                 }
