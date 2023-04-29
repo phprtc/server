@@ -225,22 +225,27 @@ class Server implements ServerInterface
         return new Event($frame);
     }
 
-    public function createWebsocketRoom(string $name, int $size): RoomInterface
+    public function createRoom(string $name, int $size): RoomInterface
     {
         /**
          * @var RoomInterface $room
          * @phpstan-ignore-next-line
          */
         $room = new Room($this, $name, $size);
-        $this->attachWebsocketRoom($room);
+        $this->attachRoom($room);
 
         return $room;
     }
 
-    public function attachWebsocketRoom(RoomInterface $room): static
+    public function attachRoom(RoomInterface $room): static
     {
         $this->wsRooms[$room->getName()] = $room;
         return $this;
+    }
+
+    public function roomExists(string $name): bool
+    {
+        return array_key_exists($name, $this->wsRooms);
     }
 
     public function run(): void
