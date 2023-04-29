@@ -14,6 +14,7 @@ use RTC\Contracts\Websocket\KernelInterface as WSKernelInterface;
 use RTC\Contracts\Websocket\RoomInterface;
 use RTC\Contracts\Websocket\WebsocketHandlerInterface;
 use RTC\Server\Enums\LogRotation;
+use RTC\Server\Enums\WSIntendedReceiver;
 use RTC\Server\Enums\WSRoomTerm;
 use RTC\Server\Exceptions\RoomNotFoundException;
 use RTC\Server\Facades\HttpHandler;
@@ -408,7 +409,7 @@ class Server implements ServerInterface
 
     protected function dispatchRoomMessage(ConnectionInterface $connection, EventInterface $event): void
     {
-        if ($event->getRoom()) {
+        if (WSIntendedReceiver::ROOM->is($event->getIntendedReceiver()) && $event->getRoom()) {
             // Create Room
             if (WSRoomTerm::CREATE->is($event->getEvent())) {
                 $this->createRoom($event->getRoom(), $this->size);
