@@ -48,12 +48,16 @@ class Server implements ServerInterface
     protected array $settings = [];
 
 
-    public static function create(string $host, int $port): static
+    public static function create(string $host, int $port, int $size = 2048): static
     {
         return new static($host, $port);
     }
 
-    public function __construct(protected string $host, protected int $port)
+    public function __construct(
+        public readonly string $host,
+        public readonly int $port,
+        public readonly int $size
+    )
     {
         self::$instance = $this;
 
@@ -280,7 +284,7 @@ class Server implements ServerInterface
         $this->server->start();
     }
 
-    public function handleOnOpen(\Swoole\WebSocket\Server $server, Http1Request|Http2Request $request): void
+    protected function handleOnOpen(\Swoole\WebSocket\Server $server, Http1Request|Http2Request $request): void
     {
         if ($request instanceof Http2Request) {
             throw new RuntimeException('Http2 is not supported yet.');
@@ -312,7 +316,7 @@ class Server implements ServerInterface
         }
     }
 
-    public function handleOnMessage(\Swoole\Http\Server $server, Frame $frame): void
+    protected function handleOnMessage(\Swoole\Http\Server $server, Frame $frame): void
     {
         if ($this->hasWsKernel) {
             $handler = $this->findHandlerByFD($frame->fd);
