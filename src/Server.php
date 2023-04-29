@@ -10,10 +10,12 @@ use RTC\Contracts\Websocket\ConnectionInterface;
 use RTC\Contracts\Websocket\EventInterface;
 use RTC\Contracts\Websocket\FrameInterface;
 use RTC\Contracts\Websocket\KernelInterface as WSKernelInterface;
+use RTC\Contracts\Websocket\RoomInterface;
 use RTC\Contracts\Websocket\WebsocketHandlerInterface;
 use RTC\Server\Enums\LogRotation;
 use RTC\Server\Exceptions\UnexpectedValueException;
 use RTC\Server\Facades\HttpHandler;
+use RTC\Websocket\Room;
 use RTC\Websocket\Connection;
 use RTC\Websocket\Event;
 use RuntimeException;
@@ -50,7 +52,7 @@ class Server implements ServerInterface
 
     public static function create(string $host, int $port, int $size = 2048): static
     {
-        return new static($host, $port);
+        return new static($host, $port, $size);
     }
 
     public function __construct(
@@ -216,6 +218,12 @@ class Server implements ServerInterface
     {
         /**@phpstan-ignore-next-line * */
         return new Event($frame);
+    }
+
+    public function createWebsocketRoom(string $name, int $size): RoomInterface
+    {
+        /**@phpstan-ignore-next-line * */
+        return new Room($this, $name, $size);
     }
 
     public function run(): void
