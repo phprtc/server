@@ -294,9 +294,7 @@ class Server implements ServerInterface
         }
 
         // CLOSE CONNECTION
-        $this->server->on('close', function (\Swoole\WebSocket\Server|\Swoole\Http\Server $server, int $fd) {
-            $this->findHandlerByFD($fd)?->onClose($this->makeConnection($fd));
-        });
+        $this->server->on('close', $this->handleOnClose(...));
 
         // Fire HTTP handler readiness event
         if ($this->hasHttpKernel && $this->httpHasHandler) {
@@ -368,6 +366,20 @@ class Server implements ServerInterface
                     $this->dispatchRoomMessage($rtcConnection, $event);
                 }
             }
+        }
+    }
+
+    protected function handleOnClose(\Swoole\WebSocket\Server|\Swoole\Http\Server $server, int $fd): void
+    {
+        $connection = $this->makeConnection($fd);
+        $this->findHandlerByFD($fd)?->onClose($connection);
+
+        // Remove connection from rooms
+        foreach ($this->wsRooms as $room) {
+            $room->remove(
+                connection: $connection,
+                leaveMessage: 'user disconnects'
+            );
         }
     }
 
