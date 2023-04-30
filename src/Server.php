@@ -231,7 +231,7 @@ class Server implements ServerInterface
     public function sendWSMessage(
         int                $fd,
         string             $event,
-        mixed              $message,
+        mixed              $data,
         WSIntendedReceiver $receiverType,
         string             $receiverId
     ): void
@@ -240,7 +240,7 @@ class Server implements ServerInterface
             fd: $fd,
             data: strval(json_encode([
                 'event' => $event,
-                'data' => $message,
+                'data' => $data,
                 'time' => microtime(true),
                 'receiver' => [
                     'type' => $receiverType->value,
