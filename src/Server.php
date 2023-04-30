@@ -235,8 +235,8 @@ class Server implements ServerInterface
         WSIntendedReceiver $receiverType,
         string             $receiverId,
         array              $meta = [],
-        int    $opcode = 1,
-        int    $flags = SWOOLE_WEBSOCKET_FLAG_FIN
+        int                $opcode = 1,
+        int                $flags = SWOOLE_WEBSOCKET_FLAG_FIN
     ): void
     {
         $this->push(
