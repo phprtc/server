@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace RTC\Server;
 
 use Closure;
+use RTC\Contracts\Enums\WSIntendedReceiver;
 use RTC\Contracts\Exceptions\UnexpectedValueException;
 use RTC\Contracts\Http\KernelInterface as HttpKernelInterface;
 use RTC\Contracts\Server\ServerInterface;
@@ -14,7 +15,6 @@ use RTC\Contracts\Websocket\KernelInterface as WSKernelInterface;
 use RTC\Contracts\Websocket\RoomInterface;
 use RTC\Contracts\Websocket\WebsocketHandlerInterface;
 use RTC\Server\Enums\LogRotation;
-use RTC\Server\Enums\WSIntendedReceiver;
 use RTC\Server\Enums\WSRoomTerm;
 use RTC\Server\Exceptions\RoomNotFoundException;
 use RTC\Server\Facades\HttpHandler;
@@ -228,6 +228,28 @@ class Server implements ServerInterface
         return new Event($frame);
     }
 
+    public function sendWSMessage(
+        int                $fd,
+        string             $event,
+        mixed              $message,
+        WSIntendedReceiver $receiverType,
+        string             $receiverId
+    ): void
+    {
+        $this->push(
+            fd: $fd,
+            data: strval(json_encode([
+                'event' => $event,
+                'data' => $message,
+                'time' => microtime(true),
+                'receiver' => [
+                    'type' => $receiverType->value,
+                    'id' => $receiverId
+                ]
+            ]))
+        );
+    }
+
     public function createRoom(string $name, int $size): RoomInterface
     {
         /**
@@ -393,7 +415,7 @@ class Server implements ServerInterface
 
                     $receiver = $event->getReceiver();
 
-                    if (WSIntendedReceiver::ROOM->is($receiver->getType())) {
+                    if (WSIntendedReceiver::ROOM->value == $receiver->getType()) {
                         $this->dispatchRoomMessage($rtcConnection, $event);
                     }
                 }
