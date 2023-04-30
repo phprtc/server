@@ -233,7 +233,8 @@ class Server implements ServerInterface
         string             $event,
         mixed              $data,
         WSIntendedReceiver $receiverType,
-        string             $receiverId
+        string             $receiverId,
+        array              $meta = []
     ): void
     {
         $this->push(
@@ -241,6 +242,7 @@ class Server implements ServerInterface
             data: strval(json_encode([
                 'event' => $event,
                 'data' => $data,
+                'meta' => $meta,
                 'time' => microtime(true),
                 'receiver' => [
                     'type' => $receiverType->value,
