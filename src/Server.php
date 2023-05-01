@@ -501,6 +501,12 @@ class Server implements ServerInterface
                 return;
             }
 
+            // Attach Information To Client
+            if (WSRoomTerm::ATTACH_INFO->value == $event->getEvent()) {
+                $connection->attachInfo(strval(json_encode($event->getMessage())));
+                return;
+            }
+
             // Message Room
             foreach ($this->wsRooms as $room) {
                 if ($room->getName() == $roomId) {
