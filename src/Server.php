@@ -5,7 +5,7 @@ namespace RTC\Server;
 
 use Closure;
 use RTC\Contracts\Enums\WSIntendedReceiver;
-use RTC\Contracts\Enums\WSRoomTerm;
+use RTC\Contracts\Enums\WSEvent;
 use RTC\Contracts\Enums\WSSenderType;
 use RTC\Contracts\Exceptions\UnexpectedValueException;
 use RTC\Contracts\Http\KernelInterface as HttpKernelInterface;
@@ -456,6 +456,15 @@ class Server implements ServerInterface
                     $event = $this->makeEvent($rtcFrame);
                     $handler->onEvent($rtcConnection, $event);
 
+                    // Handle ping-pong
+                    if ($event->eventIs(WSEvent::PING->value)) {
+                        $rtcConnection->send(
+                            event: WSEvent::PONG->value,
+                            data: ['message' => WSEvent::PONG->value]
+                        );
+                        return;
+                    }
+
                     $receiver = $event->getReceiver();
 
                     if (WSIntendedReceiver::SERVER->value == $receiver->getType()) {
@@ -490,10 +499,10 @@ class Server implements ServerInterface
     protected function dispatchServerMessage(ConnectionInterface $connection, EventInterface $event): void
     {
         // Attach Information To Client
-        if (WSRoomTerm::ATTACH_INFO->value == $event->getEvent()) {
+        if (WSEvent::ATTACH_INFO->value == $event->getEvent()) {
             $connection->attachInfo(strval(json_encode($event->getMessage())));
             $connection->send(
-                event: WSRoomTerm::INFO_ATTACHED->value,
+                event: WSEvent::INFO_ATTACHED->value,
                 data: 'information saved'
             );
 
@@ -507,19 +516,19 @@ class Server implements ServerInterface
 
         if ($roomId) {
             // Create Room
-            if (WSRoomTerm::CREATE->value == $event->getEvent()) {
+            if (WSEvent::CREATE->value == $event->getEvent()) {
                 $this->createRoom($roomId, $this->size);
                 return;
             }
 
             // Join Room
-            if (WSRoomTerm::JOIN->value == $event->getEvent()) {
+            if (WSEvent::JOIN->value == $event->getEvent()) {
                 $this->getOrCreateRoom($roomId)->add($connection);
                 return;
             }
 
             // Leave Room
-            if (WSRoomTerm::LEAVE->value == $event->getEvent()) {
+            if (WSEvent::LEAVE->value == $event->getEvent()) {
                 $this->getOrCreateRoom($roomId)->remove($connection);
                 return;
             }
