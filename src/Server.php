@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace RTC\Server;
 
 use Closure;
+use JetBrains\PhpStorm\Pure;
 use RTC\Contracts\Enums\WSIntendedReceiver;
 use RTC\Contracts\Enums\WSRoomTerm;
 use RTC\Contracts\Enums\WSSenderType;
@@ -230,6 +231,33 @@ class Server implements ServerInterface
         return new Event($frame);
     }
 
+    /**
+     * Attach information to a connection
+     *
+     * @param ConnectionInterface|int $connection
+     * @param string $info
+     * @return $this
+     */
+    public function attachConnectionInfo(ConnectionInterface|int $connection, string $info): static
+    {
+        $connId = $this->getConnectionId($connection);
+        $data = $this->connections->get($connId);
+        $data['info'] = $info;
+        $this->connections->set($connId, $data);
+        return $this;
+    }
+
+    /**
+     * Get attached connection information
+     *
+     * @param ConnectionInterface|int $connection
+     * @return string|null
+     */
+    public function getConnectionInfo(ConnectionInterface|int $connection): ?string
+    {
+        return $this->connections->get($this->getConnectionId($connection), 'info');
+    }
+
     public function sendWSMessage(
         int                $fd,
         string             $event,
@@ -254,7 +282,7 @@ class Server implements ServerInterface
                     'type' => $senderType->value,
                     'id' => $senderId,
                     'info' => $senderType == WSSenderType::USER
-                        ? $this->websocketHandlers[$this->connections->get(strval($fd), 'info')] ?? null
+                        ? $this->getConnectionInfo($fd)
                         : null
                 ],
                 'receiver' => [
@@ -390,10 +418,13 @@ class Server implements ServerInterface
 
             // If requested ws server is not defined
             if (empty($handler)) {
-                $connection->send('conn.rejected', [
-                    'status' => 404,
-                    'reason' => "No handler for route '{$request->server['request_uri']}' found."
-                ]);
+                $connection->send(
+                    event: 'conn.rejected',
+                    data: [
+                        'status' => 404,
+                        'reason' => "No handler for route '{$request->server['request_uri']}' found."
+                    ]
+                );
 
                 $connection->close();
 
@@ -481,6 +512,20 @@ class Server implements ServerInterface
                 }
             }
         }
+    }
+
+    #[Pure] protected function getConnectionId(int|ConnectionInterface $connection): string
+    {
+        return strval(is_int($connection) ? $connection : $connection->getIdentifier());
+    }
+
+    protected function getConnection(int|ConnectionInterface $connection): ConnectionInterface
+    {
+        if (is_int($connection)) {
+            return Server::get()->makeConnection($connection);
+        }
+
+        return $connection;
     }
 
     public static function get(): static
