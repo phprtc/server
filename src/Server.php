@@ -432,10 +432,7 @@ class Server implements ServerInterface
 
         // Remove connection from rooms
         foreach ($this->wsRooms as $room) {
-            $room->remove(
-                connection: $connection,
-                leaveMessage: 'user disconnects'
-            );
+            $room->remove($connection);
         }
     }
 
