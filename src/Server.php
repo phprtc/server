@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace RTC\Server;
 
 use Closure;
-use JetBrains\PhpStorm\Pure;
 use RTC\Contracts\Enums\WSIntendedReceiver;
 use RTC\Contracts\Enums\WSRoomTerm;
 use RTC\Contracts\Enums\WSSenderType;
@@ -476,6 +475,9 @@ class Server implements ServerInterface
         foreach ($this->wsRooms as $room) {
             $room->remove($connection);
         }
+
+        // Remove connection from tracking list
+        $this->connections->delete(strval($fd));
     }
 
     protected function dispatchRoomMessage(ConnectionInterface $connection, EventInterface $event): void
@@ -504,6 +506,11 @@ class Server implements ServerInterface
             // Attach Information To Client
             if (WSRoomTerm::ATTACH_INFO->value == $event->getEvent()) {
                 $connection->attachInfo(strval(json_encode($event->getMessage())));
+                $connection->send(
+                    event: WSRoomTerm::INFO_ATTACHED->value,
+                    data: 'information saved'
+                );
+
                 return;
             }
 
@@ -520,7 +527,7 @@ class Server implements ServerInterface
         }
     }
 
-    #[Pure] protected function getConnectionId(int|ConnectionInterface $connection): string
+    protected function getConnectionId(int|ConnectionInterface $connection): string
     {
         return strval(is_int($connection) ? $connection : $connection->getIdentifier());
     }
