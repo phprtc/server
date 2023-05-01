@@ -465,7 +465,13 @@ class Server implements ServerInterface
                     if (!$receiver->isValid()) {
                         $rtcConnection->send(
                             event: WSEvent::EVENT_REJECTED->value,
-                            data: ['reason' => 'invalid event receiver']
+                            data: [
+                                'reason' => 'invalid event receiver',
+                                'event' => [
+                                    'name' => $event->getName(),
+                                    'data' => $event->getData()
+                                ]
+                            ]
                         );
                         return;
                     }
@@ -502,8 +508,8 @@ class Server implements ServerInterface
     protected function dispatchServerMessage(ConnectionInterface $connection, EventInterface $event): void
     {
         // Attach Information To Client
-        if (WSEvent::ATTACH_INFO->value == $event->getEvent()) {
-            $connection->attachInfo(strval(json_encode($event->getMessage())));
+        if (WSEvent::ATTACH_INFO->value == $event->getName()) {
+            $connection->attachInfo(strval(json_encode($event->getData())));
             $connection->send(
                 event: WSEvent::INFO_ATTACHED->value,
                 data: 'information saved'
@@ -519,19 +525,19 @@ class Server implements ServerInterface
 
         if ($roomId) {
             // Create Room
-            if (WSEvent::CREATE->value == $event->getEvent()) {
+            if (WSEvent::CREATE->value == $event->getName()) {
                 $this->createRoom($roomId, $this->size);
                 return;
             }
 
             // Join Room
-            if (WSEvent::JOIN->value == $event->getEvent()) {
+            if (WSEvent::JOIN->value == $event->getName()) {
                 $this->getOrCreateRoom($roomId)->add($connection);
                 return;
             }
 
             // Leave Room
-            if (WSEvent::LEAVE->value == $event->getEvent()) {
+            if (WSEvent::LEAVE->value == $event->getName()) {
                 $this->getOrCreateRoom($roomId)->remove($connection);
                 return;
             }
@@ -541,8 +547,8 @@ class Server implements ServerInterface
                 if ($room->getName() == $roomId) {
                     $room->sendAsClient(
                         connection: $connection,
-                        event: $event->getEvent(),
-                        message: $event->getMessage(),
+                        event: $event->getName(),
+                        message: $event->getData(),
                     );
                 }
             }
