@@ -6,6 +6,7 @@ namespace RTC\Server;
 use Closure;
 use RTC\Contracts\Enums\WSIntendedReceiver;
 use RTC\Contracts\Enums\WSRoomTerm;
+use RTC\Contracts\Enums\WSSenderType;
 use RTC\Contracts\Exceptions\UnexpectedValueException;
 use RTC\Contracts\Http\KernelInterface as HttpKernelInterface;
 use RTC\Contracts\Server\ServerInterface;
@@ -73,6 +74,7 @@ class Server implements ServerInterface
 
         $this->connections = new Table(1024);
         $this->connections->column('path', Table::TYPE_STRING, 100);
+        $this->connections->column('info', Table::TYPE_STRING, 1000);
         $this->connections->create();
     }
 
@@ -232,6 +234,8 @@ class Server implements ServerInterface
         int                $fd,
         string             $event,
         mixed              $data,
+        WSSenderType       $senderType,
+        string             $senderId,
         WSIntendedReceiver $receiverType,
         string             $receiverId,
         array              $meta = [],
@@ -246,6 +250,13 @@ class Server implements ServerInterface
                 'data' => $data,
                 'meta' => $meta,
                 'time' => microtime(true),
+                'sender' => [
+                    'type' => $senderType->value,
+                    'id' => $senderId,
+                    'info' => $senderType == WSSenderType::USER
+                        ? $this->websocketHandlers[$this->connections->get(strval($fd), 'info')] ?? null
+                        : null
+                ],
                 'receiver' => [
                     'type' => $receiverType->value,
                     'id' => $receiverId
