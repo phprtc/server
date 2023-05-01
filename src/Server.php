@@ -281,7 +281,7 @@ class Server implements ServerInterface
                     'type' => $senderType->value,
                     'id' => $senderId,
                     'info' => $senderType == WSSenderType::USER
-                        ? $this->getConnectionInfo($fd)
+                        ? $this->getConnectionInfo(intval($senderId))
                         : null
                 ],
                 'receiver' => [
