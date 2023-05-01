@@ -445,30 +445,30 @@ class Server implements ServerInterface
 
     protected function dispatchRoomMessage(ConnectionInterface $connection, EventInterface $event): void
     {
-        $roomName = $event->getReceiver()->getName();
+        $roomId = $event->getReceiver()->getId();
 
-        if ($roomName) {
+        if ($roomId) {
             // Create Room
             if (WSRoomTerm::CREATE->is($event->getEvent())) {
-                $this->createRoom($roomName, $this->size);
+                $this->createRoom($roomId, $this->size);
                 return;
             }
 
             // Join Room
             if (WSRoomTerm::JOIN->is($event->getEvent())) {
-                $this->getOrCreateRoom($roomName)->add($connection);
+                $this->getOrCreateRoom($roomId)->add($connection);
                 return;
             }
 
             // Leave Room
             if (WSRoomTerm::LEAVE->is($event->getEvent())) {
-                $this->getOrCreateRoom($roomName)->remove($connection);
+                $this->getOrCreateRoom($roomId)->remove($connection);
                 return;
             }
 
             // Message Room
             foreach ($this->wsRooms as $room) {
-                if ($room->getName() == $roomName) {
+                if ($room->getName() == $roomId) {
                     $room->sendAsClient(
                         connection: $connection,
                         event: $event->getEvent(),
