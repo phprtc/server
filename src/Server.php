@@ -4,8 +4,8 @@ declare(strict_types=1);
 namespace RTC\Server;
 
 use Closure;
-use RTC\Contracts\Enums\WSIntendedReceiver;
 use RTC\Contracts\Enums\WSEvent;
+use RTC\Contracts\Enums\WSIntendedReceiver;
 use RTC\Contracts\Enums\WSSenderType;
 use RTC\Contracts\Exceptions\UnexpectedValueException;
 use RTC\Contracts\Http\KernelInterface as HttpKernelInterface;
@@ -417,16 +417,11 @@ class Server implements ServerInterface
 
             // If requested ws server is not defined
             if (empty($handler)) {
-                $connection->send(
-                    event: 'conn.rejected',
-                    data: [
-                        'status' => 404,
-                        'reason' => "No handler for route '{$request->server['request_uri']}' found."
-                    ]
+                $this->rejectConnection(
+                    connection: $connection,
+                    reason: "No handler for route '{$request->server['request_uri']}' found.",
+                    code: 404
                 );
-
-                $connection->close();
-
                 return;
             }
 
@@ -466,6 +461,14 @@ class Server implements ServerInterface
                     }
 
                     $receiver = $event->getReceiver();
+
+                    if (!$receiver->isValid()) {
+                        $rtcConnection->send(
+                            event: WSEvent::EVENT_REJECTED->value,
+                            data: ['reason' => 'invalid event receiver']
+                        );
+                        return;
+                    }
 
                     if (WSIntendedReceiver::SERVER->value == $receiver->getType()) {
                         $this->dispatchServerMessage($rtcConnection, $event);
@@ -544,6 +547,19 @@ class Server implements ServerInterface
                 }
             }
         }
+    }
+
+    protected function rejectConnection(ConnectionInterface $connection, string $reason, int $code): void
+    {
+        $connection->send(
+            event: 'conn.rejected',
+            data: [
+                'status' => $code,
+                'reason' => $code
+            ]
+        );
+
+        $connection->close();
     }
 
     protected function getConnectionId(int|ConnectionInterface $connection): string
