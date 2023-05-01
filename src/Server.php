@@ -458,6 +458,10 @@ class Server implements ServerInterface
 
                     $receiver = $event->getReceiver();
 
+                    if (WSIntendedReceiver::SERVER->value == $receiver->getType()) {
+                        $this->dispatchServerMessage($rtcConnection, $event);
+                    }
+
                     if (WSIntendedReceiver::ROOM->value == $receiver->getType()) {
                         $this->dispatchRoomMessage($rtcConnection, $event);
                     }
@@ -480,6 +484,20 @@ class Server implements ServerInterface
         $this->connections->delete(strval($fd));
     }
 
+    protected function dispatchServerMessage(ConnectionInterface $connection, EventInterface $event): void
+    {
+        // Attach Information To Client
+        if (WSRoomTerm::ATTACH_INFO->value == $event->getEvent()) {
+            $connection->attachInfo(strval(json_encode($event->getMessage())));
+            $connection->send(
+                event: WSRoomTerm::INFO_ATTACHED->value,
+                data: 'information saved'
+            );
+
+            return;
+        }
+    }
+
     protected function dispatchRoomMessage(ConnectionInterface $connection, EventInterface $event): void
     {
         $roomId = $event->getReceiver()->getId();
@@ -500,17 +518,6 @@ class Server implements ServerInterface
             // Leave Room
             if (WSRoomTerm::LEAVE->value == $event->getEvent()) {
                 $this->getOrCreateRoom($roomId)->remove($connection);
-                return;
-            }
-
-            // Attach Information To Client
-            if (WSRoomTerm::ATTACH_INFO->value == $event->getEvent()) {
-                $connection->attachInfo(strval(json_encode($event->getMessage())));
-                $connection->send(
-                    event: WSRoomTerm::INFO_ATTACHED->value,
-                    data: 'information saved'
-                );
-
                 return;
             }
 
