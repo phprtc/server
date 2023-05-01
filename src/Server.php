@@ -472,16 +472,19 @@ class Server implements ServerInterface
 
     protected function handleOnClose(\Swoole\WebSocket\Server|\Swoole\Http\Server $server, int $fd): void
     {
-        $connection = $this->makeConnection($fd);
-        $this->findHandlerByFD($fd)?->onClose($connection);
+        $connId = strval($fd);
+        if ($this->connections->exist($connId)) {
+            $connection = $this->makeConnection($fd);
+            $this->findHandlerByFD($fd)?->onClose($connection);
 
-        // Remove connection from rooms
-        foreach ($this->wsRooms as $room) {
-            $room->remove($connection);
+            // Remove connection from rooms
+            foreach ($this->wsRooms as $room) {
+                $room->remove($connection);
+            }
+
+            // Remove connection from tracking list
+            $this->connections->delete(strval($fd));
         }
-
-        // Remove connection from tracking list
-        $this->connections->delete(strval($fd));
     }
 
     protected function dispatchServerMessage(ConnectionInterface $connection, EventInterface $event): void
