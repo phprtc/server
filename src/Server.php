@@ -5,6 +5,7 @@ namespace RTC\Server;
 
 use Closure;
 use RTC\Contracts\Enums\WSIntendedReceiver;
+use RTC\Contracts\Enums\WSRoomTerm;
 use RTC\Contracts\Exceptions\UnexpectedValueException;
 use RTC\Contracts\Http\KernelInterface as HttpKernelInterface;
 use RTC\Contracts\Server\ServerInterface;
@@ -15,7 +16,6 @@ use RTC\Contracts\Websocket\KernelInterface as WSKernelInterface;
 use RTC\Contracts\Websocket\RoomInterface;
 use RTC\Contracts\Websocket\WebsocketHandlerInterface;
 use RTC\Server\Enums\LogRotation;
-use RTC\Contracts\Enums\WSRoomTerm;
 use RTC\Server\Exceptions\RoomNotFoundException;
 use RTC\Server\Facades\HttpHandler;
 use RTC\Websocket\Connection;
@@ -286,7 +286,7 @@ class Server implements ServerInterface
      */
     public function getRoom(string $name): RoomInterface
     {
-        if (!$this->roomExists($name)) {
+        if ($this->roomExists($name)) {
             return $this->wsRooms[$name];
         }
 
@@ -295,13 +295,9 @@ class Server implements ServerInterface
 
     public function getOrCreateRoom(string $name): RoomInterface
     {
-        try {
-            return $this->roomExists($name)
-                ? $this->getRoom($name)
-                : $this->createRoom($name, $this->size);
-        } catch (RoomNotFoundException) {
-            return $this->createRoom($name, $this->size);
-        }
+        return $this->roomExists($name)
+            ? $this->getRoom($name)
+            : $this->createRoom($name, $this->size);
     }
 
     public function run(): void
