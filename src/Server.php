@@ -15,7 +15,7 @@ use RTC\Contracts\Websocket\KernelInterface as WSKernelInterface;
 use RTC\Contracts\Websocket\RoomInterface;
 use RTC\Contracts\Websocket\WebsocketHandlerInterface;
 use RTC\Server\Enums\LogRotation;
-use RTC\Server\Enums\WSRoomTerm;
+use RTC\Contracts\Enums\WSRoomTerm;
 use RTC\Server\Exceptions\RoomNotFoundException;
 use RTC\Server\Facades\HttpHandler;
 use RTC\Websocket\Connection;
@@ -449,19 +449,19 @@ class Server implements ServerInterface
 
         if ($roomId) {
             // Create Room
-            if (WSRoomTerm::CREATE->is($event->getEvent())) {
+            if (WSRoomTerm::CREATE->value == $event->getEvent()) {
                 $this->createRoom($roomId, $this->size);
                 return;
             }
 
             // Join Room
-            if (WSRoomTerm::JOIN->is($event->getEvent())) {
+            if (WSRoomTerm::JOIN->value == $event->getEvent()) {
                 $this->getOrCreateRoom($roomId)->add($connection);
                 return;
             }
 
             // Leave Room
-            if (WSRoomTerm::LEAVE->is($event->getEvent())) {
+            if (WSRoomTerm::LEAVE->value == $event->getEvent()) {
                 $this->getOrCreateRoom($roomId)->remove($connection);
                 return;
             }

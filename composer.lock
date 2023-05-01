@@ -175,12 +175,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/phprtc/contracts.git",
-                "reference": "ec6da3f2a326d82c2360e7353aa10361babde884"
+                "reference": "9e2c837dad39ac7a989c6eeeda277d3a195576ca"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phprtc/contracts/zipball/ec6da3f2a326d82c2360e7353aa10361babde884",
-                "reference": "ec6da3f2a326d82c2360e7353aa10361babde884",
+                "url": "https://api.github.com/repos/phprtc/contracts/zipball/9e2c837dad39ac7a989c6eeeda277d3a195576ca",
+                "reference": "9e2c837dad39ac7a989c6eeeda277d3a195576ca",
                 "shasum": ""
             },
             "require": {
@@ -215,7 +215,7 @@
                 "issues": "https://github.com/phprtc/contracts/issues",
                 "source": "https://github.com/phprtc/contracts/tree/master"
             },
-            "time": "2023-05-01T00:36:57+00:00"
+            "time": "2023-05-01T01:20:31+00:00"
         },
         {
             "name": "phprtc/utils",
