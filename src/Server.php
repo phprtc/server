@@ -7,6 +7,7 @@ use Closure;
 use RTC\Contracts\Enums\WSEvent;
 use RTC\Contracts\Enums\WSIntendedReceiver;
 use RTC\Contracts\Enums\WSSenderType;
+use RTC\Contracts\Exceptions\RuntimeException;
 use RTC\Contracts\Exceptions\UnexpectedValueException;
 use RTC\Contracts\Http\KernelInterface as HttpKernelInterface;
 use RTC\Contracts\Server\ServerInterface;
@@ -22,10 +23,10 @@ use RTC\Server\Facades\HttpHandler;
 use RTC\Websocket\Connection;
 use RTC\Websocket\Event;
 use RTC\Websocket\Room;
-use RuntimeException;
 use Swoole\Http\Request as Http1Request;
 use Swoole\Http2\Request as Http2Request;
 use Swoole\Table;
+use Swoole\Timer;
 use Swoole\WebSocket\Frame;
 
 class Server implements ServerInterface
@@ -420,7 +421,8 @@ class Server implements ServerInterface
                 $this->rejectConnection(
                     connection: $connection,
                     reason: "No handler for route '{$request->server['request_uri']}' found.",
-                    code: 404
+                    code: 404,
+                    meta: ['path' => $request->server['request_uri']]
                 );
                 return;
             }
@@ -463,14 +465,13 @@ class Server implements ServerInterface
                     $receiver = $event->getReceiver();
 
                     if (!$receiver->isValid()) {
-                        $rtcConnection->send(
-                            event: WSEvent::EVENT_REJECTED->value,
-                            data: [
-                                'reason' => 'invalid event receiver',
-                                'event' => [
-                                    'name' => $event->getName(),
-                                    'data' => $event->getData()
-                                ]
+                        $this->rejectConnection(
+                            connection: $rtcConnection,
+                            reason: 'invalid event receiver',
+                            code: 400,
+                            meta: [
+                                'name' => $event->getName(),
+                                'data' => $event->getData()
                             ]
                         );
                         return;
@@ -555,17 +556,19 @@ class Server implements ServerInterface
         }
     }
 
-    protected function rejectConnection(ConnectionInterface $connection, string $reason, int $code): void
+    protected function rejectConnection(ConnectionInterface $connection, string $reason, int $code, array $meta = []): void
     {
         $connection->send(
             event: 'conn.rejected',
             data: [
                 'status' => $code,
-                'reason' => $code
-            ]
+                'reason' => $reason,
+            ],
+            meta: $meta,
         );
 
-        $connection->close();
+        // Let user receive rejection message first before disconnecting
+        Timer::after(100, fn() => $connection->close());
     }
 
     protected function getConnectionId(int|ConnectionInterface $connection): string
