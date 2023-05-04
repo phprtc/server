@@ -268,6 +268,7 @@ class Server implements ServerInterface
         WSIntendedReceiver $receiverType,
         string             $receiverId,
         array              $meta = [],
+        StatusCode         $status = StatusCode::OK,
         int                $opcode = 1,
         int                $flags = SWOOLE_WEBSOCKET_FLAG_FIN
     ): void
