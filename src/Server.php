@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace RTC\Server;
 
 use Closure;
+use HttpStatusCodes\StatusCode;
 use RTC\Contracts\Enums\WSEvent;
 use RTC\Contracts\Enums\WSIntendedReceiver;
 use RTC\Contracts\Enums\WSSenderType;
@@ -421,7 +422,7 @@ class Server implements ServerInterface
                 $this->rejectConnection(
                     connection: $connection,
                     reason: "No handler for route '{$request->server['request_uri']}' found.",
-                    code: 404,
+                    statusCode: StatusCode::NOT_FOUND,
                     meta: ['path' => $request->server['request_uri']]
                 );
                 return;
@@ -465,14 +466,14 @@ class Server implements ServerInterface
                     $receiver = $event->getReceiver();
 
                     if (!$receiver->isValid()) {
-                        $this->rejectConnection(
-                            connection: $rtcConnection,
-                            reason: 'invalid event receiver',
-                            code: 400,
+                        $rtcConnection->send(
+                            event: WSEvent::EVENT_REJECTED->value,
+                            data: 'invalid event receiver',
                             meta: [
                                 'name' => $event->getName(),
                                 'data' => $event->getData()
-                            ]
+                            ],
+                            status: StatusCode::BAD_REQUEST,
                         );
                         return;
                     }
@@ -556,12 +557,12 @@ class Server implements ServerInterface
         }
     }
 
-    protected function rejectConnection(ConnectionInterface $connection, string $reason, int $code, array $meta = []): void
+    protected function rejectConnection(ConnectionInterface $connection, string $reason, StatusCode $statusCode, array $meta = []): void
     {
         $connection->send(
             event: 'conn.rejected',
             data: [
-                'status' => $code,
+                'status' => $statusCode->value,
                 'reason' => $reason,
             ],
             meta: $meta,

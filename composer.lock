@@ -7,6 +7,46 @@
     "content-hash": "6b6a3515e824bcbd1b34e3aa39db776a",
     "packages": [
         {
+            "name": "ahmard/http-status-codes",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Ahmard/http-status-codes.git",
+                "reference": "8ca75d703a73cd83df16491a414db278d1127f94"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Ahmard/http-status-codes/zipball/8ca75d703a73cd83df16491a414db278d1127f94",
+                "reference": "8ca75d703a73cd83df16491a414db278d1127f94",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.1"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "HttpStatusCodes\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "ahmard",
+                    "email": "ahmardy@outlook.com"
+                }
+            ],
+            "description": "Http Status Code Enums",
+            "support": {
+                "issues": "https://github.com/Ahmard/http-status-codes/issues",
+                "source": "https://github.com/Ahmard/http-status-codes/tree/1.0.0"
+            },
+            "time": "2023-05-04T00:15:46+00:00"
+        },
+        {
             "name": "evenement/evenement",
             "version": "v3.0.1",
             "source": {
@@ -175,15 +215,16 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/phprtc/contracts.git",
-                "reference": "a5667035f73622d3efb512f1f28b5be26fe0ec05"
+                "reference": "01816757b00549c6b05d5a0c5bb99a8e8257b5d5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phprtc/contracts/zipball/a5667035f73622d3efb512f1f28b5be26fe0ec05",
-                "reference": "a5667035f73622d3efb512f1f28b5be26fe0ec05",
+                "url": "https://api.github.com/repos/phprtc/contracts/zipball/01816757b00549c6b05d5a0c5bb99a8e8257b5d5",
+                "reference": "01816757b00549c6b05d5a0c5bb99a8e8257b5d5",
                 "shasum": ""
             },
             "require": {
+                "ahmard/http-status-codes": "^1.0",
                 "guzzlehttp/psr7": "^2.0",
                 "php": ">=8.1"
             },
@@ -215,7 +256,7 @@
                 "issues": "https://github.com/phprtc/contracts/issues",
                 "source": "https://github.com/phprtc/contracts/tree/master"
             },
-            "time": "2023-05-03T13:20:21+00:00"
+            "time": "2023-05-04T00:37:14+00:00"
         },
         {
             "name": "phprtc/utils",
