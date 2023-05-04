@@ -568,6 +568,7 @@ class Server implements ServerInterface
                 'reason' => $reason,
             ],
             meta: $meta,
+            status: $statusCode,
         );
 
         // Let user receive rejection message first before disconnecting
