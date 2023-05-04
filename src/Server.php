@@ -279,6 +279,7 @@ class Server implements ServerInterface
                 'event' => $event,
                 'data' => $data,
                 'meta' => $meta,
+                'status' => $status->value,
                 'time' => microtime(true),
                 'sender' => [
                     'type' => $senderType->value,
