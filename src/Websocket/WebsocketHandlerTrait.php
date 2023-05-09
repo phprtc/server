@@ -378,19 +378,19 @@ trait WebsocketHandlerTrait
 
         if ($roomId) {
             // Create Room
-            if (WSEvent::CREATE->value == $event->getName()) {
+            if (WSEvent::ROOM_CREATE->value == $event->getName()) {
                 $this->createRoom($roomId, $this->size);
                 return;
             }
 
             // Join Room
-            if (WSEvent::JOIN->value == $event->getName()) {
+            if (WSEvent::ROOM_JOIN->value == $event->getName()) {
                 $this->getOrCreateRoom($roomId)->add($connection);
                 return;
             }
 
             // Leave Room
-            if (WSEvent::LEAVE->value == $event->getName()) {
+            if (WSEvent::ROOM_LEAVE->value == $event->getName()) {
                 $this->getOrCreateRoom($roomId)->remove($connection);
                 return;
             }
