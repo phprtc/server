@@ -215,12 +215,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/phprtc/contracts.git",
-                "reference": "f85dbaea4a3f22e79a2cae6184bf39899127890b"
+                "reference": "d81cb62a9029161ff56d169edb05148b5aced9a1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phprtc/contracts/zipball/f85dbaea4a3f22e79a2cae6184bf39899127890b",
-                "reference": "f85dbaea4a3f22e79a2cae6184bf39899127890b",
+                "url": "https://api.github.com/repos/phprtc/contracts/zipball/d81cb62a9029161ff56d169edb05148b5aced9a1",
+                "reference": "d81cb62a9029161ff56d169edb05148b5aced9a1",
                 "shasum": ""
             },
             "require": {
@@ -256,7 +256,7 @@
                 "issues": "https://github.com/phprtc/contracts/issues",
                 "source": "https://github.com/phprtc/contracts/tree/master"
             },
-            "time": "2023-05-04T00:53:08+00:00"
+            "time": "2023-05-09T08:34:46+00:00"
         },
         {
             "name": "phprtc/utils",
@@ -1612,16 +1612,16 @@
         },
         {
             "name": "sebastian/diff",
-            "version": "4.0.4",
+            "version": "4.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/diff.git",
-                "reference": "3461e3fccc7cfdfc2720be910d3bd73c69be590d"
+                "reference": "74be17022044ebaaecfdf0c5cd504fc9cd5a7131"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/diff/zipball/3461e3fccc7cfdfc2720be910d3bd73c69be590d",
-                "reference": "3461e3fccc7cfdfc2720be910d3bd73c69be590d",
+                "url": "https://api.github.com/repos/sebastianbergmann/diff/zipball/74be17022044ebaaecfdf0c5cd504fc9cd5a7131",
+                "reference": "74be17022044ebaaecfdf0c5cd504fc9cd5a7131",
                 "shasum": ""
             },
             "require": {
@@ -1666,7 +1666,7 @@
             ],
             "support": {
                 "issues": "https://github.com/sebastianbergmann/diff/issues",
-                "source": "https://github.com/sebastianbergmann/diff/tree/4.0.4"
+                "source": "https://github.com/sebastianbergmann/diff/tree/4.0.5"
             },
             "funding": [
                 {
@@ -1674,7 +1674,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2020-10-26T13:10:38+00:00"
+            "time": "2023-05-07T05:35:17+00:00"
         },
         {
             "name": "sebastian/environment",
