@@ -158,7 +158,7 @@ trait WebsocketHandlerTrait
             ]);
 
             // Track Heartbeat
-            $this->setConnectionTimeout($connectionId);
+            $this->updateConnectionTimeout($connectionId);
             $this->trackHeartbeat($connection);
 
             // Invoke handler onOpen() method
@@ -255,7 +255,7 @@ trait WebsocketHandlerTrait
     protected function dispatchServerMessage(ConnectionInterface $connection, EventInterface $event): void
     {
         // Attach Information To Client
-        if (WSEvent::ATTACH_INFO->value == $event->getName()) {
+        if ($event->eventIs(WSEvent::ATTACH_INFO->value)) {
             $connection->attachInfo(strval(json_encode($event->getData())));
             $connection->send(
                 event: WSEvent::INFO_ATTACHED->value,
@@ -263,6 +263,10 @@ trait WebsocketHandlerTrait
             );
 
             return;
+        }
+
+        if ($event->eventIs(WSEvent::PONG->value)) {
+            $this->updateConnectionTimeout(strval($connection->getIdentifier()));
         }
     }
 
@@ -407,7 +411,7 @@ trait WebsocketHandlerTrait
             if ($clientTimeout >= time()) {
                 $connection->send(
                     event: WSEvent::PING->value,
-                    data: ['message' => WSEvent::PONG->value],
+                    data: ['message' => 'routine pulse check'],
                 );
 
                 $this->closeConnection(
@@ -422,12 +426,10 @@ trait WebsocketHandlerTrait
                 event: WSEvent::PING->value,
                 data: ['message' => WSEvent::PONG->value]
             );
-
-            $this->setConnectionTimeout($connectionId);
         });
     }
 
-    protected function setConnectionTimeout(string $connectionId): void
+    protected function updateConnectionTimeout(string $connectionId): void
     {
         $this->heartbeats->set($connectionId, [
             'timeout' => time() + $this->clientTimeout
