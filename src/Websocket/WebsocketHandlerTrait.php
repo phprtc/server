@@ -399,7 +399,7 @@ trait WebsocketHandlerTrait
 
     protected function trackHeartbeat(ConnectionInterface $connection): void
     {
-        Timer::tick($this->heartbeatInterval, function () use ($connection) {
+        Timer::tick($this->heartbeatInterval * 1000, function () use ($connection) {
             $connectionId = strval($connection->getIdentifier());
             $clientTimeout = $this->heartbeats->get($connectionId, 'timeout');
 
