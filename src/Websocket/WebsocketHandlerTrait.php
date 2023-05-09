@@ -173,6 +173,7 @@ trait WebsocketHandlerTrait
      * @param \Swoole\Http\Server $server
      * @param Frame $frame
      * @return void
+     * @throws RoomNotFoundException
      */
     protected function handleOnMessage(\Swoole\Http\Server $server, Frame $frame): void
     {
@@ -410,7 +411,8 @@ trait WebsocketHandlerTrait
                     data: $this->listRoomConnections(
                         roomName: $roomId,
                         withInfo: true
-                    )
+                    ),
+                    meta: ['room' => $roomId]
                 );
                 return;
             }
