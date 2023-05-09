@@ -159,6 +159,7 @@ trait WebsocketHandlerTrait
 
             // Track Heartbeat
             $this->setConnectionTimeout($connectionId);
+            $this->trackHeartbeat($connection);
 
             // Invoke handler onOpen() method
             $handler->onOpen($connection);
