@@ -160,6 +160,7 @@ trait WebsocketHandlerTrait
             // Track Heartbeat
             $this->updateConnectionTimeout($connectionId);
             $this->trackHeartbeat($connection);
+            $this->welcomeNewConnection($connection);
 
             // Invoke handler onOpen() method
             $handler->onOpen($connection);
@@ -443,5 +444,23 @@ trait WebsocketHandlerTrait
         $this->heartbeats->set($connectionId, [
             'timeout' => time() + $this->clientTimeout
         ]);
+    }
+
+    /**
+     * Send payload to newly connected client
+     *
+     * @param ConnectionInterface $connection
+     * @return void
+     */
+    protected function welcomeNewConnection(ConnectionInterface $connection): void
+    {
+        $connection->send(
+            event: WSEvent::WELCOME->value,
+            data: [
+                'sid' => $connection->getIdentifier(),
+                'ping_interval' => $this->heartbeatInterval,
+                'client_timeout' => $this->clientTimeout
+            ]
+        );
     }
 }
