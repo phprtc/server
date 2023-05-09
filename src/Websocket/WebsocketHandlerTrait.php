@@ -346,6 +346,11 @@ trait WebsocketHandlerTrait
         return $this;
     }
 
+    public function listRooms(): array
+    {
+        return array_keys($this->wsRooms);
+    }
+
     public function roomExists(string $name): bool
     {
         return array_key_exists($name, $this->wsRooms);
@@ -372,6 +377,9 @@ trait WebsocketHandlerTrait
             : $this->createRoom($name, $this->size);
     }
 
+    /**
+     * @throws RoomNotFoundException
+     */
     protected function dispatchRoomMessage(ConnectionInterface $connection, EventInterface $event): void
     {
         $roomId = $event->getReceiver()->getId();
@@ -395,6 +403,18 @@ trait WebsocketHandlerTrait
                 return;
             }
 
+            // Room Connection List Request
+            if ($event->eventIs(WSEvent::ROOM_LIST_CONNECTIONS->value)) {
+                $connection->send(
+                    event: WSEvent::ROOM_CONNECTIONS->value,
+                    data: $this->listRoomConnections(
+                        roomName: $roomId,
+                        withInfo: true
+                    )
+                );
+                return;
+            }
+
             // Message Room
             foreach ($this->wsRooms as $room) {
                 if ($room->getName() == $roomId) {
@@ -406,6 +426,21 @@ trait WebsocketHandlerTrait
                 }
             }
         }
+    }
+
+    /**
+     * @param string $roomName
+     * @param bool $withInfo
+     * @return array
+     * @throws RoomNotFoundException
+     */
+    protected function listRoomConnections(string $roomName, bool $withInfo): array
+    {
+        if ($this->roomExists($roomName)) {
+            return $this->getRoom($roomName)->listConnections($withInfo);
+        }
+
+        return [];
     }
 
     protected function trackHeartbeat(ConnectionInterface $connection): void
