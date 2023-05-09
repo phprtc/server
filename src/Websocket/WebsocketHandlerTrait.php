@@ -192,12 +192,18 @@ trait WebsocketHandlerTrait
                     $event = $this->makeEvent($rtcFrame);
                     $handler->onEvent($rtcConnection, $event);
 
-                    // Handle ping-pong
+                    // Handle ping
                     if ($event->eventIs(WSEvent::PING->value)) {
                         $rtcConnection->send(
                             event: WSEvent::PONG->value,
                             data: ['message' => WSEvent::PONG->value]
                         );
+                        return;
+                    }
+
+                    // Handle pong
+                    if ($event->eventIs(WSEvent::PONG->value)) {
+                        $this->updateConnectionTimeout(strval($frame->fd));
                         return;
                     }
 
@@ -403,12 +409,12 @@ trait WebsocketHandlerTrait
 
     protected function trackHeartbeat(ConnectionInterface $connection): void
     {
-        Timer::tick($this->heartbeatInterval * 1000, function () use ($connection) {
+        Timer::tick($this->heartbeatInterval * 1000, function (int $timerId) use ($connection) {
             $connectionId = strval($connection->getIdentifier());
             $clientTimeout = $this->heartbeats->get($connectionId, 'timeout');
 
             // Close connections that failed to respond within specified clientTimeout value
-            if ($clientTimeout >= time()) {
+            if (time() >= $clientTimeout) {
                 $connection->send(
                     event: WSEvent::PING->value,
                     data: ['message' => 'routine pulse check'],
@@ -419,6 +425,9 @@ trait WebsocketHandlerTrait
                     mode: WSDisconnectMode::TIMEOUT,
                     message: 'Failed to reply sent pings'
                 );
+
+                Timer::clear($timerId);
+                return;
             }
 
             // Send ping

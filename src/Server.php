@@ -78,7 +78,7 @@ class Server implements ServerInterface
         $this->connections->create();
 
         $this->heartbeats = new Table($this->size);
-        $this->heartbeats->column('timestamp', Table::TYPE_INT, 11);
+        $this->heartbeats->column('timeout', Table::TYPE_INT, 11);
         $this->heartbeats->create();
     }
 
