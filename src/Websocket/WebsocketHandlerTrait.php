@@ -424,6 +424,7 @@ trait WebsocketHandlerTrait
                         connection: $connection,
                         event: $event->getName(),
                         message: $event->getData(),
+                        isForwarding: true
                     );
                 }
             }
