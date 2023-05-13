@@ -417,8 +417,6 @@ trait WebsocketHandlerTrait
                 return;
             }
 
-            $handler->
-
             // Message Room
             $handler->forwardRoomMessage(
                 room: $this->getOrCreateRoom($roomId),
