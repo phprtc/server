@@ -229,7 +229,7 @@ trait WebsocketHandlerTrait
                     }
 
                     if (WSIntendedReceiver::ROOM->value == $receiver->getType()) {
-                        $this->dispatchRoomMessage($rtcConnection, $event);
+                        $this->dispatchRoomMessage($handler, $rtcConnection, $event);
                     }
                 }
             }
@@ -381,7 +381,7 @@ trait WebsocketHandlerTrait
     /**
      * @throws RoomNotFoundException
      */
-    protected function dispatchRoomMessage(ConnectionInterface $connection, EventInterface $event): void
+    protected function dispatchRoomMessage(WebsocketHandlerInterface $handler, ConnectionInterface $connection, EventInterface $event): void
     {
         $roomId = $event->getReceiver()->getId();
 
@@ -418,16 +418,11 @@ trait WebsocketHandlerTrait
             }
 
             // Message Room
-            foreach ($this->wsRooms as $room) {
-                if ($room->getName() == $roomId) {
-                    $room->sendAsClient(
-                        connection: $connection,
-                        event: $event->getName(),
-                        message: $event->getData(),
-                        isForwarding: true
-                    );
-                }
-            }
+            $handler->forwardRoomMessage(
+                room: $this->getOrCreateRoom($roomId),
+                connection: $connection,
+                event: $event
+            );
         }
     }
 
