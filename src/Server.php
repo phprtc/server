@@ -92,9 +92,9 @@ class Server implements ServerInterface
         return $this;
     }
 
-    public function enableHotCodeReload(array $paths): static
+    public function enableHotCodeReload(bool $status, array $paths = []): static
     {
-        $this->isHotCodeReloadEnabled = true;
+        $this->isHotCodeReloadEnabled = $status;
         $this->hotCodeReloadPaths = $paths;
         return $this;
     }
