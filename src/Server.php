@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace RTC\Server;
 
 use Closure;
+use RTC\Console\Console;
 use RTC\Contracts\Exceptions\RuntimeException;
 use RTC\Contracts\Exceptions\UnexpectedValueException;
 use RTC\Contracts\Http\KernelInterface as HttpKernelInterface;
@@ -11,6 +12,7 @@ use RTC\Contracts\Server\ServerInterface;
 use RTC\Contracts\Websocket\KernelInterface as WSKernelInterface;
 use RTC\Contracts\Websocket\RoomInterface;
 use RTC\Contracts\Websocket\WebsocketHandlerInterface;
+use RTC\Server\Enums\Events;
 use RTC\Server\Enums\LogRotation;
 use RTC\Server\Facades\HttpHandler;
 use RTC\Server\Websocket\WebsocketHandlerTrait;
@@ -26,6 +28,7 @@ class Server implements ServerInterface
     protected HttpKernelInterface $httpKernel;
     protected WSKernelInterface $wsKernel;
     protected Closure $onStartCallback;
+    private Event $event;
 
     /**
      * @var static $instance
@@ -65,6 +68,7 @@ class Server implements ServerInterface
      * @param int $size
      * @param int $heartbeatInterval Ping-pong interval in seconds
      * @param int $clientTimeout Client timeout in seconds
+     * @param array $listeners
      */
     public function __construct(
         public readonly string $host,
@@ -72,6 +76,7 @@ class Server implements ServerInterface
         public readonly int    $size,
         public readonly int    $heartbeatInterval = 20,
         public readonly int    $clientTimeout = 40,
+        public readonly array  $listeners = [],
     )
     {
         self::$instance = $this;
@@ -84,6 +89,14 @@ class Server implements ServerInterface
         $this->heartbeats = new Table($this->size);
         $this->heartbeats->column('timeout', Table::TYPE_INT, 11);
         $this->heartbeats->create();
+
+        $this->event = new Event();
+
+        foreach (Events::cases() as $event) {
+            foreach ($this->listeners[$event->value] as $listener) {
+                $this->event->on($event->value, $listener);
+            }
+        }
     }
 
     public function daemonize(): static
@@ -250,37 +263,113 @@ class Server implements ServerInterface
         }
 
         if ($this->hasHttpKernel && $this->httpHasHandler) {
-            $this->server->on('request', new HttpHandler(
+            $this->server->on('Request', new HttpHandler(
                 handler: $this->httpKernel->getHandler(),
                 kernel: $this->httpKernel
             ));
         }
 
-        $this->server->on('start', function () {
+        $this->server->on('Start', function () {
             if (isset($this->onStartCallback)) {
                 call_user_func($this->onStartCallback, $this->server);
             }
+
+            $this->event->emit(Events::SERVER_START->value, [$this->server]);
         });
 
-        $this->server->on('WorkerStart', function () {
+        $this->server->on('WorkerStart', function (...$params) {
             if ($this->isHotCodeReloadEnabled) {
                 Watcher::create()
                     ->addPath($this->hotCodeReloadPaths)
-                    ->onChange(fn() => $this->server->reload())
+                    ->onChange(function () {
+                        /**@phpstan-ignore-next-line * */
+                        Console::getInstance()->comment('[server] fs changes detected, reloading server...');
+                    })
                     ->start();
             }
+
+            $this->event->emit(Events::SERVER_WORKER_START->value, [$this->server, ...$params]);
+        });
+
+        // WORKER STOP
+        $this->server->on('WorkerStop', function (...$params) {
+            $this->event->emit(Events::SERVER_WORKER_STOP->value, [$this->server, ...$params]);
+        });
+
+        // WORKER ERROR
+        $this->server->on('WorkerError', function (...$params) {
+            $this->event->emit(Events::SERVER_WORKER_STOP->value, [$this->server, ...$params]);
+        });
+
+        // CONNECT
+        $this->server->on('Connect', function (...$params) {
+            $this->event->emit(Events::SERVER_CONNECT->value, [$this->server, ...$params]);
+        });
+
+        // Receive
+        $this->server->on('Receive', function (...$params) {
+            $this->event->emit(Events::SERVER_RECEIVE->value, [$this->server, ...$params]);
+        });
+
+        // Packet
+        $this->server->on('Packet', function (...$params) {
+            $this->event->emit(Events::SERVER_PACKET->value, [$this->server, ...$params]);
+        });
+
+        // Task
+        $this->server->on('Task', function (...$params) {
+            $this->event->emit(Events::SERVER_TASK->value, [$this->server, ...$params]);
+        });
+
+        // Finish
+        $this->server->on('Finish', function (...$params) {
+            $this->event->emit(Events::SERVER_TASK->value, [$this->server, ...$params]);
+        });
+
+        // Pipe Message
+        $this->server->on('PipeMessage', function (...$params) {
+            $this->event->emit(Events::SERVER_TASK->value, [$this->server, ...$params]);
+        });
+
+        // Manager Start
+        $this->server->on('ManagerStart', function (...$params) {
+            $this->event->emit(Events::SERVER_MANAGER_START->value, [$this->server, ...$params]);
+        });
+
+        // Manager Stop
+        $this->server->on('ManagerStop', function (...$params) {
+            $this->event->emit(Events::SERVER_MANAGER_STOP->value, [$this->server, ...$params]);
+        });
+
+        // Before Reload
+        $this->server->on('BeforeReload', function (...$params) {
+            $this->event->emit(Events::SERVER_BEFORE_RELOAD->value, [$this->server, ...$params]);
+        });
+
+        // After Reload
+        $this->server->on('AfterReload', function (...$params) {
+            $this->event->emit(Events::SERVER_AFTER_RELOAD->value, [$this->server, ...$params]);
         });
 
         // NEW CONNECTION
-        $this->server->on('open', $this->handleOnOpen(...));
+        $this->server->on('Open', function (...$params) {
+            $this->handleOnOpen(...$params);
+            $this->event->emit(Events::SERVER_OPEN->value, [$this->server, ...$params]);
+        });
 
         // CONNECTION MESSAGES
         if ($this->wsHasHandlers) {
-            $this->server->on('message', $this->handleOnMessage(...));
+            $this->server->on('Message', function (...$params) {
+                $this->handleOnMessage(...$params);
+                $this->event->emit(Events::SERVER_MESSAGE->value, [$this->server, ...$params]);
+            });
         }
 
         // CLOSE CONNECTION
-        $this->server->on('close', $this->handleOnClose(...));
+        $this->server->on('Close', function (...$params) {
+            $this->handleOnClose(...$params);
+            $this->event->emit(Events::SERVER_CLOSE->value, [$this->server, ...$params]);
+        });
 
         // Fire HTTP handler readiness event
         if ($this->hasHttpKernel && $this->httpHasHandler) {
