@@ -340,8 +340,6 @@ trait WebsocketHandlerTrait
          * @phpstan-ignore-next-line
          */
         $room = new Room($this, $name, $size);
-        $this->attachRoom($room);
-
         return $room;
     }
 
