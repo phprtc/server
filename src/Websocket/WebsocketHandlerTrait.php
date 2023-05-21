@@ -13,6 +13,7 @@ use RTC\Contracts\Websocket\EventInterface;
 use RTC\Contracts\Websocket\FrameInterface;
 use RTC\Contracts\Websocket\RoomInterface;
 use RTC\Contracts\Websocket\WebsocketHandlerInterface;
+use RTC\Server\Enums\Events;
 use RTC\Server\Exceptions\RoomNotFoundException;
 use RTC\Server\Server;
 use RTC\Websocket\Connection;
@@ -161,6 +162,9 @@ trait WebsocketHandlerTrait
             $this->updateConnectionTimeout($connectionId);
             $this->trackHeartbeat($connection);
             $this->welcomeNewConnection($connection);
+
+            // Emit event
+            $this->event->emit(Events::WS_CONNECTION_OPENED->value, [$this, $connection]);
 
             // Invoke handler onOpen() method
             $handler->onOpen($connection);
@@ -386,21 +390,25 @@ trait WebsocketHandlerTrait
         $roomId = $event->getReceiver()->getId();
 
         if ($roomId) {
+            $room = $this->getOrCreateRoom($roomId);
+
+            // Emit Event
+            $this->event->emit(WSEvent::ROOM_MESSAGE, [$this, $connection, $event]);
+
             // Create Room
             if (WSEvent::ROOM_CREATE->value == $event->getName()) {
-                $this->createRoom($roomId, $this->size);
                 return;
             }
 
             // Join Room
             if (WSEvent::ROOM_JOIN->value == $event->getName()) {
-                $this->getOrCreateRoom($roomId)->add($connection);
+                $room->add($connection);
                 return;
             }
 
             // Leave Room
             if (WSEvent::ROOM_LEAVE->value == $event->getName()) {
-                $this->getOrCreateRoom($roomId)->remove($connection);
+                $room->remove($connection);
                 return;
             }
 
