@@ -68,7 +68,7 @@ class Server implements ServerInterface
      * @param int $size
      * @param int $heartbeatInterval Ping-pong interval in seconds
      * @param int $clientTimeout Client timeout in seconds
-     * @param array $listeners
+     * @param array<string, array<int, callable|callable-string>> $listeners
      */
     public function __construct(
         public readonly string $host,
@@ -95,7 +95,8 @@ class Server implements ServerInterface
         foreach (Events::cases() as $event) {
             foreach ($this->listeners[$event->value] ?? [] as $listener) {
                 if (is_string($listener)) {
-                    $listener = [$listener, '__invoke'];
+                    /**@phpstan-ignore-next-line **/
+                    $listener = (new $listener)->__invoke(...);
                 }
 
                 $this->event->on($event->value, $listener);
