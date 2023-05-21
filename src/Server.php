@@ -93,7 +93,7 @@ class Server implements ServerInterface
         $this->event = new Event();
 
         foreach (Events::cases() as $event) {
-            foreach ($this->listeners[$event->value] as $listener) {
+            foreach ($this->listeners[$event->value] ?? [] as $listener) {
                 $this->event->on($event->value, $listener);
             }
         }
