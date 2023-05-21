@@ -14,6 +14,7 @@ use RTC\Contracts\Websocket\WebsocketHandlerInterface;
 use RTC\Server\Enums\LogRotation;
 use RTC\Server\Facades\HttpHandler;
 use RTC\Server\Websocket\WebsocketHandlerTrait;
+use RTC\Watcher\Watcher;
 use Swoole\Table;
 
 class Server implements ServerInterface
@@ -30,6 +31,9 @@ class Server implements ServerInterface
      * @var static $instance
      */
     private static ServerInterface $instance;
+    private string $rootDirectory;
+    private bool $isHotCodeReloadEnabled = false;
+    private array $hotCodeReloadPaths = [];
 
     protected bool $hasWsKernel = false;
     protected bool $hasHttpKernel = false;
@@ -85,6 +89,19 @@ class Server implements ServerInterface
     public function daemonize(): static
     {
         $this->settings['daemonize'] = 1;
+        return $this;
+    }
+
+    public function enableHotCodeReload(array $paths): static
+    {
+        $this->isHotCodeReloadEnabled = true;
+        $this->hotCodeReloadPaths = $paths;
+        return $this;
+    }
+
+    public function setRootDirectory(string $path): static
+    {
+        $this->rootDirectory = $path;
         return $this;
     }
 
@@ -209,6 +226,7 @@ class Server implements ServerInterface
 
     public function run(): void
     {
+        $this->rootDirectory ??= __DIR__;
         $this->hasHttpKernel = isset($this->httpKernel);
         $this->hasWsKernel = isset($this->wsKernel);
         $this->wsHasHandlers = $this->hasWsKernel && $this->wsKernel->hasHandlers();
@@ -241,6 +259,15 @@ class Server implements ServerInterface
         $this->server->on('start', function () {
             if (isset($this->onStartCallback)) {
                 call_user_func($this->onStartCallback, $this->server);
+            }
+        });
+
+        $this->server->on('WorkerStart', function () {
+            if ($this->isHotCodeReloadEnabled) {
+                Watcher::create()
+                    ->addPath($this->hotCodeReloadPaths)
+                    ->onChange(fn() => $this->server->reload())
+                    ->start();
             }
         });
 

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6b6a3515e824bcbd1b34e3aa39db776a",
+    "content-hash": "b2ddc7671c236a09bf4f02d7a68d6250",
     "packages": [
         {
             "name": "ahmard/http-status-codes",
@@ -828,6 +828,54 @@
                 "source": "https://github.com/phar-io/version/tree/3.2.1"
             },
             "time": "2022-02-21T01:04:05+00:00"
+        },
+        {
+            "name": "phprtc/watcher",
+            "version": "0.1.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/phprtc/watcher.git",
+                "reference": "17dc7a7cdbfb53a881cc108de8f7bc5d353fa6fd"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/phprtc/watcher/zipball/17dc7a7cdbfb53a881cc108de8f7bc5d353fa6fd",
+                "reference": "17dc7a7cdbfb53a881cc108de8f7bc5d353fa6fd",
+                "shasum": ""
+            },
+            "require": {
+                "evenement/evenement": "^3.0",
+                "ext-inotify": "*",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "openswoole/ide-helper": "^4.11",
+                "phpstan/phpstan": "^1.10",
+                "phpunit/phpunit": "^9.6",
+                "symfony/var-dumper": "^6.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "RTC\\Watcher\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ahmard",
+                    "email": "ahmardy@outlook.com"
+                }
+            ],
+            "description": "Swoole File Watcher",
+            "support": {
+                "issues": "https://github.com/phprtc/watcher/issues",
+                "source": "https://github.com/phprtc/watcher/tree/0.1.3"
+            },
+            "time": "2023-03-23T12:53:18+00:00"
         },
         {
             "name": "phpstan/phpstan",
