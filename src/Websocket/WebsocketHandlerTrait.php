@@ -393,7 +393,7 @@ trait WebsocketHandlerTrait
             $room = $this->getOrCreateRoom($roomId);
 
             // Emit Event
-            $this->event->emit(WSEvent::ROOM_MESSAGE, [$this, $connection, $event]);
+            $this->event->emit(Events::WS_ROOM_MESSAGE->value, [$this, $connection, $event]);
 
             // Create Room
             if (WSEvent::ROOM_CREATE->value == $event->getName()) {
