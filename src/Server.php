@@ -94,6 +94,10 @@ class Server implements ServerInterface
 
         foreach (Events::cases() as $event) {
             foreach ($this->listeners[$event->value] ?? [] as $listener) {
+                if (is_string($listener)) {
+                    $listener = [$listener, '__invoke'];
+                }
+
                 $this->event->on($event->value, $listener);
             }
         }
