@@ -261,10 +261,10 @@ class Server implements ServerInterface
         if (
             ($this->hasWsKernel && $this->wsHasHandlers)
             && ($this->hasHttpKernel && !$this->httpHasHandler)
-        ) {  // Create http server if websocket is not being used
-            $this->server = new \Swoole\Http\Server($this->host, $this->port);
-        } else {   // Create websocket server if websocket is being used
+        ) {  // Create websocket server if websocket is being used
             $this->server = new \Swoole\Websocket\Server($this->host, $this->port);
+        } else {   // Create http server if websocket is not being used
+            $this->server = new \Swoole\Http\Server($this->host, $this->port);
         }
 
         if ($this->hasHttpKernel && $this->httpHasHandler) {
