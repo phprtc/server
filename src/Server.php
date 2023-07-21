@@ -24,30 +24,22 @@ class Server implements ServerInterface
     use WebsocketHandlerTrait;
 
 
-    protected \Swoole\Websocket\Server|\Swoole\Http\Server $server;
-    protected HttpKernelInterface $httpKernel;
-    protected WSKernelInterface $wsKernel;
-    protected Closure $onStartCallback;
-    private Event $event;
-
     /**
      * @var static $instance
      */
     private static ServerInterface $instance;
-    private string $rootDirectory;
-    private bool $isHotCodeReloadEnabled = false;
-    private array $hotCodeReloadPaths = [];
-
+    protected \Swoole\Websocket\Server|\Swoole\Http\Server $server;
+    protected HttpKernelInterface $httpKernel;
+    protected WSKernelInterface $wsKernel;
+    protected Closure $onStartCallback;
     protected bool $hasWsKernel = false;
     protected bool $hasHttpKernel = false;
     protected bool $wsHasHandlers = false;
     protected bool $httpHasHandler = false;
-
     /**
      * @var WebsocketHandlerInterface[]
      */
     protected array $websocketHandlers = [];
-
     protected array $settings = [];
     protected Table $connections;
     protected Table $heartbeats;
@@ -55,12 +47,10 @@ class Server implements ServerInterface
      * @var RoomInterface[] $wsRooms
      */
     protected array $wsRooms = [];
-
-
-    public static function create(string $host, int $port, int $size = 2048): static
-    {
-        return new static($host, $port, $size);
-    }
+    private Event $event;
+    private string $rootDirectory;
+    private bool $isHotCodeReloadEnabled = false;
+    private array $hotCodeReloadPaths = [];
 
     /**
      * @param string $host
@@ -95,13 +85,23 @@ class Server implements ServerInterface
         foreach (Events::cases() as $event) {
             foreach ($this->listeners[$event->value] ?? [] as $listener) {
                 if (is_string($listener)) {
-                    /**@phpstan-ignore-next-line **/
+                    /**@phpstan-ignore-next-line * */
                     $listener = (new $listener)->__invoke(...);
                 }
 
                 $this->event->on($event->value, $listener);
             }
         }
+    }
+
+    public static function create(string $host, int $port, int $size = 2048): static
+    {
+        return new static($host, $port, $size);
+    }
+
+    public static function get(): static
+    {
+        return self::$instance;
     }
 
     public function daemonize(): static
@@ -153,6 +153,12 @@ class Server implements ServerInterface
             'log_date_format' => $format,
             'log_date_with_microseconds' => $withSeconds,
         ]);
+    }
+
+    public function set(array $settings): static
+    {
+        $this->settings = array_merge($this->settings, $settings);
+        return $this;
     }
 
     /**
@@ -227,12 +233,6 @@ class Server implements ServerInterface
         return $this->server->exist($fd);
     }
 
-    public function set(array $settings): static
-    {
-        $this->settings = array_merge($this->settings, $settings);
-        return $this;
-    }
-
     public function findHandler(string $path): ?WebsocketHandlerInterface
     {
         foreach ($this->websocketHandlers as $handlerPath => $handler) {
@@ -269,6 +269,7 @@ class Server implements ServerInterface
 
         if ($this->hasHttpKernel && $this->httpHasHandler) {
             $this->server->on('Request', new HttpHandler(
+                server: $this,
                 handler: $this->httpKernel->getHandler(),
                 kernel: $this->httpKernel
             ));
@@ -390,10 +391,5 @@ class Server implements ServerInterface
 
         $this->server->set($this->settings);
         $this->server->start();
-    }
-
-    public static function get(): static
-    {
-        return self::$instance;
     }
 }

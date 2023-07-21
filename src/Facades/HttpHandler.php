@@ -3,21 +3,23 @@ declare(strict_types=1);
 
 namespace RTC\Server\Facades;
 
+use RTC\Contracts\Http\HttpException;
 use RTC\Contracts\Http\HttpHandlerInterface;
 use RTC\Contracts\Http\KernelInterface;
 use RTC\Contracts\Http\RequestInterface;
 use RTC\Contracts\Http\Router\DispatchResultInterface;
+use RTC\Contracts\Server\ServerInterface;
 use RTC\Http\Exceptions\MiddlewareException;
 use RTC\Http\Middlewares\ControllerExecutorMiddleware;
 use RTC\Http\Request;
 use RTC\Http\Router\Dispatcher;
 use Swoole\Http\Request as Http1Request;
 use Swoole\Http\Response as Http1Response;
-use Throwable;
 
 class HttpHandler
 {
     public function __construct(
+        protected ServerInterface      $server,
         protected HttpHandlerInterface $handler,
         protected KernelInterface      $kernel
     )
@@ -28,7 +30,7 @@ class HttpHandler
      * @param Http1Request $swRequest
      * @param Http1Response $swResponse
      * @return void
-     * @throws throwable
+     * @throws HttpException
      */
     public function __invoke(Http1Request $swRequest, Http1Response $swResponse): void
     {
@@ -72,6 +74,6 @@ class HttpHandler
     ): RequestInterface
     {
         /**@phpstan-ignore-next-line * */
-        return new Request($request, $response, $kernel, $dispatchResult);
+        return new Request($request, $response, $kernel, $dispatchResult, $this->server);
     }
 }
